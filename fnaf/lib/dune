@@ -1,0 +1,5 @@
+(library
+ (inline_tests)
+ (name fnaf)
+ (preprocess
+  (pps ppx_inline_test)))
