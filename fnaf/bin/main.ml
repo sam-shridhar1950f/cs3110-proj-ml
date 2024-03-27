@@ -1,5 +1,7 @@
-<<<<<<< HEAD
-include Random
+open Graphics
+open Unix
+
+
 [@@@ocaml.warning "-69"]
 type game_state = {
   mutable battery: int;
@@ -10,10 +12,9 @@ type game_state = {
   mutable monster_locations: (string * int * float) list;
 }
 [@@@ocaml.warning "+69"]
-
 let initial_state () = {
   battery = 100;
-  start_time = Unix.gettimeofday ();
+  start_time = gettimeofday ();
   door_closed = false;
   light_on = false;
   camera_statuses = List.init 5 (fun i -> (i + 1, false));
@@ -21,8 +22,7 @@ let initial_state () = {
 }
 
 
-=======
-open Graphics
+
 let clear_window color =
   let fg = foreground in
   set_color color;
@@ -110,6 +110,5 @@ let main_menu () =
   synchronize ();
   close_graph ();;
 
-
+let _ = initial_state ()
 let () = main_menu ()
->>>>>>> 0c6fd52 (implemented basic gui in bin/main.ml)
