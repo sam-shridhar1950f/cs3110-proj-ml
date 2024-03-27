@@ -1,6 +1,6 @@
-# CS3110 Project: Machine Learning
+# CS3110 Project
 
-Welcome to our machine learning project for CS3110! This document serves as a guide for setting up and using the tools and programs associated with our project.
+Welcome to our Five Nights at Freddy's project for CS3110! This document serves as a guide for setting up and using the tools and programs associated with our project.
 
 ## Team Members
 - **Samarth (Sam) Shridhar**
