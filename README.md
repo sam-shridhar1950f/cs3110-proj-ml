@@ -7,12 +7,12 @@
 ## Rohan Mahajan (rm939, rm939@cornell.edu or rohan.mahajan@icloud.com)
 
 # Usage
-## Note: for the graphics to work, you have to download a few things.
-## XQuartz: If you are on a Mac device please install Xquartz: https://www.xquartz.org/
-## Also note that XQuartz must be open before you run the program!
-## Packages: Please install graphics using 'opam install graphics'
-## When running the program, please use the commands 'OCAMLRUNPARAM=b dune build' and then 'OCAMLRUNPARAM=b dune exec bin/main.exe'
+### - Note: for the graphics to work, you have to download a few things.
+### - XQuartz: If you are on a Mac device please install Xquartz: https://www.xquartz.org/
+### - Also note that XQuartz must be open before you run the program!
+### - Packages: Please install graphics using 'opam install graphics'
+### - When running the program, please use the commands 'OCAMLRUNPARAM=b dune build' and then 'OCAMLRUNPARAM=b dune exec bin/main.exe'
 
 # Terminal Game
-## cd into /bin
-## run './game'
+### - cd into /bin
+### - run './game'
