@@ -12,3 +12,7 @@
 ## Also note that XQuartz must be open before you run the program!
 ## Packages: Please install graphics using 'opam install graphics'
 ## When running the program, please use the commands 'OCAMLRUNPARAM=b dune build' and then 'OCAMLRUNPARAM=b dune exec bin/main.exe'
+
+# Terminal Game
+# cd into /bin
+# run './game'
