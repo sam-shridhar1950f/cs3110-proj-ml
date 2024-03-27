@@ -19,7 +19,7 @@
  (name fnaf)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml dune)
+ (depends ocaml dune graphics (camlimages (= 5.0.4-1)))
  (tags
   (topics "to describe" your project)))
 

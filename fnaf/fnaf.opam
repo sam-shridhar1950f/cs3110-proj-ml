@@ -11,7 +11,13 @@ doc: "https://url/to/documentation"
 bug-reports: "https://github.com/username/reponame/issues"
 depends: [
   "ocaml"
+<<<<<<< HEAD
   "dune" {>= "3.13"}
+=======
+  "dune" {>= "3.14"}
+  "graphics"
+  "camlimages" {= "5.0.4-1"}
+>>>>>>> 0c6fd52 (implemented basic gui in bin/main.ml)
   "odoc" {with-doc}
 ]
 build: [
