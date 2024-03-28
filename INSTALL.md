@@ -39,3 +39,7 @@ To play the terminal-based game included in our project:
    ```
    ./game
    ```
+   If the game does not start, try running:
+   ```
+   ocamlrun game
+   ```
