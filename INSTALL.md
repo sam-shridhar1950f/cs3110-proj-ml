@@ -31,9 +31,9 @@ To compile and execute the program, follow these steps:
 
 ## Playing the Terminal Game
 To play the terminal-based game included in our project:
-1. Navigate to the `/bin` directory:
+1. Navigate to the `bin` directory:
    ```
-   cd /bin
+   cd bin
    ```
 2. Run the game executable:
    ```
