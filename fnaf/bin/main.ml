@@ -19,6 +19,30 @@ let initial_state () = {
   monster_locations = [("Chica", 5, 0.); ("Foxy", 5, 0.); ("Bonnie", 5, 0.); ("Freddy Fazbear", 5, 0.)];
 }
 
+
+let display_random_ascii_art filenames =
+  Random.self_init ();  (* Initialize the random number generator *)
+  
+  (* Choose a random index in the list of filenames *)
+  let index = Random.int (List.length filenames) in
+  let filename = List.nth filenames index in
+  
+  (* Function to read and print the file *)
+  let display_file filename =
+    let channel = open_in filename in
+    try
+      while true do
+        let line = input_line channel in
+        print_endline line
+      done
+    with
+    | End_of_file -> close_in channel
+    | e -> close_in_noerr channel; raise e
+  in
+  
+  (* Display the chosen file *)
+  display_file filename
+
 let elapsed_time state =
   Unix.gettimeofday () -. state.start_time
 
@@ -85,11 +109,15 @@ let process_command state command =
        update_camera_statuses state;
        let monsters_in_cam = List.filter (fun (_, loc, _) -> loc = cam_number) state.monster_locations in
        if List.length monsters_in_cam > 0 then
+         
          let monster_names = List.map (fun (name, _, _) -> name) monsters_in_cam in
          let spotted_msg = String.concat ", " monster_names in
+         let filepaths = List.map (fun name -> "data/" ^ name ^ ".txt") monster_names in
+
+         display_random_ascii_art filepaths;
          Printf.printf "Monsters spotted at Camera %d: %s\n" cam_number spotted_msg
        else
-         Printf.printf "Camera %d: Clear.\n" cam_number
+        Printf.printf "Camera %d: Clear.\n" cam_number
      with
      | Failure _ -> print_endline "Invalid camera number."
      | Not_found -> print_endline "Camera not found.")

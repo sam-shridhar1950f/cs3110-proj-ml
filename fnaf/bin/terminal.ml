@@ -19,6 +19,26 @@ let initial_state () = {
   monster_locations = [("Chica", 5, 0.); ("Foxy", 5, 0.); ("Bonnie", 5, 0.); ("Freddy Fazbear", 5, 0.)];
 }
 
+
+let print_ascii_art_from_file filename =
+  (* Open the file in read mode. *)
+  let channel = open_in filename in
+  try
+    while true do
+      (* Read lines from the file until an End_of_file exception is raised. *)
+      let line = input_line channel in
+      (* Print each line followed by a newline character to display the ASCII art correctly. *)
+      print_endline line
+    done
+  with
+  | End_of_file ->
+    (* Close the file after reading all lines. *)
+    close_in channel
+  | e ->
+    (* Close the file and re-raise the exception if it's not an End_of_file exception. *)
+    close_in_noerr channel;
+    raise e
+
 let elapsed_time state =
   Unix.gettimeofday () -. state.start_time
 
@@ -87,7 +107,7 @@ let process_command state command =
        if List.length monsters_in_cam > 0 then
          let monster_names = List.map (fun (name, _, _) -> name) monsters_in_cam in
          let spotted_msg = String.concat ", " monster_names in
-         Printf.printf "Monsters spotted at Camera %d: %s\n" cam_number spotted_msg
+         print_ascii_art_from_file "data/Chica.txt"
        else
          Printf.printf "Camera %d: Clear.\n" cam_number
      with
