@@ -1,5 +1,6 @@
 (library
  (inline_tests)
  (name fnaf)
+ (modules Monster)
  (preprocess
   (pps ppx_inline_test)))

@@ -1,5 +1,4 @@
 (executable
  (public_name fnaf)
  (name main)
- (libraries fnaf graphics unix
- ))
+ (libraries fnaf graphics unix))
