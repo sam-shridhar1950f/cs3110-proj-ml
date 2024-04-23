@@ -30,5 +30,9 @@ any monsters successfully reach the office and the list of monster names that
 reach the office. *)
 
 val get_locations : monster list -> int list
+(** [get_locations monsters] is a list of the locations of [monsters]. The 
+locations are in the same order as the monsters, and duplicates are kept. *)
 
 val get_monsters_at_location : monster list -> int -> string list
+(** [get_monsters_at_location monsters loc] is the list of monsters at a certain 
+location. *)
