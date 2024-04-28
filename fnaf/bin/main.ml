@@ -109,8 +109,38 @@ let update_camera_statuses state =
         let cam = i + 1 in
         (cam, List.exists (fun loc -> loc = cam) (get_locations state.monsters)))
 
+        let print_map () =
+          let map_lines =
+            [|
+              "Map Layout:";
+              "      [User]";
+              "        ||";
+              "        ||";
+              "      [Door]";
+              "        ||";
+              "        ||";
+              "  [Camera 1] ------ [Camera 2]";
+              "      ||               ||";
+              "      ||               ||";
+              "[Camera 3]         [Camera 4]";
+              "      \\               //";
+              "       \\             //";
+              "        \\           //";
+              "         [Camera 5]";
+            |]
+          in
+          Array.iter print_endline map_lines;
+          print_newline ()
+
 let process_command state command =
   match command with
+  | "help" -> print_endline "List of Available Commands";
+  print_endline "door - toggles the door open or closed.";
+  print_endline "light - toggles the light on or off. Informs the user if a monster is visible nearby.";
+  print_endline "toggle_generator - toggles the generator on add off. Increases the pace of monsters but recharges battery.";
+  print_endline "toggle_power_mode - toggles the battery mode from normal to power-saving, and vice versa.";
+  print_endline "camera - Usage: 'camera' followed by the desired camera number. Uses some battery and informs the user if a monster is in view.";
+  print_endline "map - displays a map of the building, including camera numbers and locations."
   | "door" ->
       let power_cost = power_consumption_rates state "door" in
       state.door_closed <- not state.door_closed;
@@ -154,6 +184,7 @@ let process_command state command =
       with
       | Failure _ -> print_endline "Invalid camera number."
       | Not_found -> print_endline "Camera not found.")
+  | "map" -> print_map ()
   | _ -> print_endline "Invalid command"
 
 let list_to_string lst =
@@ -183,28 +214,6 @@ let rec game_loop state =
     else game_loop state
   end
 
-let print_map () =
-  let map_lines =
-    [|
-      "Map Layout:";
-      "      [User]";
-      "        ||";
-      "        ||";
-      "      [Door]";
-      "        ||";
-      "        ||";
-      "  [Camera 1] ------ [Camera 2]";
-      "      ||               ||";
-      "      ||               ||";
-      "[Camera 3]         [Camera 4]";
-      "      \\               //";
-      "       \\             //";
-      "        \\           //";
-      "         [Camera 5]";
-    |]
-  in
-  Array.iter print_endline map_lines;
-  print_newline ()
 
 let choose_difficulty () : difficulty =
   print_endline "Choose difficulty: 1 - Easy, 2 - Normal, 3 - Hard";
@@ -216,10 +225,21 @@ let choose_difficulty () : difficulty =
   | _ ->
       print_endline "Invalid choice, defaulting to Normal.";
       Normal
-
-let () =
-  let difficulty = choose_difficulty () in
+  
+let start_or_tutorial () = 
+  print_endline "If you are familiar with FNAF gameplay, type start to begin. Otherwise, use the tutorial command to experiment with the game.";
+  match read_line () with
+  | "start" -> let difficulty = choose_difficulty () in
   let state = initial_state difficulty in
-  print_endline "Welcome to Five Nights at Freddy's OCaml Edition.";
   print_map ();
   game_loop state
+  | "tutorial" -> let state = initial_state Tutorial in
+  print_map ();
+  game_loop state
+  | _ -> ()
+
+
+let () =
+  print_endline "Welcome to Five Nights at Freddy's OCaml Edition.";
+  print_endline "Use the help command for a list of available commands.";
+  start_or_tutorial ()

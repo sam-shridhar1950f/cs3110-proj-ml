@@ -2,6 +2,7 @@ type monster
 (** The type of a monster *)
 
 type difficulty =
+  | Tutorial
   | Easy
   | Normal
   | Hard
