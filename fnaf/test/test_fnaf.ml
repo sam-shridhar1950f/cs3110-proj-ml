@@ -119,7 +119,30 @@ let test_extreme_time_advancement _ =
   let monsters = setup_monsters 5 0.0 in
   advance_time monsters 31536000.0 (* 1 year in seconds *) Easy false false;
   assert_location monsters [4; 4; 4; 4]  (* Expected locations after handling extreme time advancement *)
+  
+let test_invalid_time_and_location _ =
+  let monsters = setup_monsters (-1) (-1.0) in
+  List.iter
+    (fun m ->
+      assert_bool "Monster was created with invalid location or time"
+        (get_location m < 0 || get_time m < 0.0)
+    ) monsters
 
+ let test_consecutive_door_closures _ =
+  let monsters = setup_monsters 1 0.0 in
+  for _ = 1 to 5 do
+    advance_time monsters 1. Hard true false;  (* Door closed *)
+    advance_time monsters 1. Hard false false;  (* Door opened *)
+  done;
+  assert_location monsters [1; 1; 1; 1]  (* Check for expected behavior after consecutive door actions *)
+
+let test_consistency_across_runs _ =
+  let first_run = setup_monsters 5 0.0 in
+  let second_run = setup_monsters 5 0.0 in
+  advance_time first_run 10. Normal false false;
+  advance_time second_run 10. Normal false false;
+  assert_equal ~printer:(fun lst -> String.concat "; " (List.map string_of_int lst))
+    (get_locations first_run) (get_locations second_run)
 
 (* Test rapid sequence of door state changes *)
 let test_rapid_door_state_changes _ =
@@ -258,6 +281,9 @@ let suite =
          "Movement Synchronization" >:: test_movement_synchronization;
          "Individual Generator Effects" >:: test_individual_generator_effects;
          "Test Extreme Time Advancement" >:: test_extreme_time_advancement;
+         "Invalid Time and Location" >:: test_invalid_time_and_location;
+         "Consecutive Door Closures" >:: test_consecutive_door_closures;
+         "Consistency Across Runs" >:: test_consistency_across_runs;
          QCheck_ounit.to_ounit2_test
            prop_monster_never_moves_to_negative_location;
          QCheck_ounit.to_ounit2_test prop_monster_resets_if_door_closed;
