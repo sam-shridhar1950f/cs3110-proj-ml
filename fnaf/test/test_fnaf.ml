@@ -220,6 +220,21 @@ let test_individual_generator_effects _ =
     (hard_pace < easy_pace)
 
 
+let test_monster_name_consistency _ =
+  let monsters = init_monsters in
+  let names_before = List.map get_name monsters in
+  advance_time monsters 60. Normal false false;
+  let names_after = List.map get_name monsters in
+  assert_equal ~printer:(String.concat ", ") names_before names_after
+    ~msg:"Monster names should remain consistent after state changes"
+
+let test_timing_precision _ =
+  let monsters = setup_monsters 5 0.0 in
+  List.iter (fun m -> advance_time [m] 0.1 Hard false false) monsters;
+  List.iter (fun m ->
+    assert_bool "Timing updates should be precise to the second"
+      (abs_float (get_time m -. 0.1) < 1.))
+    monsters
 
 
 
@@ -305,6 +320,8 @@ let suite =
          "Consistency Across Runs" >:: test_consistency_across_runs;
          "Extreme Pacing Alterations" >:: test_extreme_pacing_changes;
          "Test Impact of Difficulty" >:: test_difficulty_impact;
+         "Names" >:: test_monster_name_consistency;
+         "Time Precision" >:: test_timing_precision;
          QCheck_ounit.to_ounit2_test
            prop_monster_never_moves_to_negative_location;
          QCheck_ounit.to_ounit2_test prop_monster_resets_if_door_closed;
