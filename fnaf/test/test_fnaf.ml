@@ -115,8 +115,11 @@ let test_random_resets_within_bounds _ =
         (get_location m >= 0 && get_location m <= 5))
     monsters
 
-(* Continue with similar specific tests for every aspect of the game mechanics
-   and edge cases *)
+let test_extreme_time_advancement _ =
+  let monsters = setup_monsters 5 0.0 in
+  advance_time monsters 31536000.0 (* 1 year in seconds *) Easy false false;
+  assert_location monsters [4; 4; 4; 4]  (* Expected locations after handling extreme time advancement *)
+
 
 (* Test rapid sequence of door state changes *)
 let test_rapid_door_state_changes _ =
@@ -254,6 +257,7 @@ let suite =
          "Critical Door Interactions" >:: test_critical_door_interactions;
          "Movement Synchronization" >:: test_movement_synchronization;
          "Individual Generator Effects" >:: test_individual_generator_effects;
+         "Test Extreme Time Advancement" >:: test_extreme_time_advancement;
          QCheck_ounit.to_ounit2_test
            prop_monster_never_moves_to_negative_location;
          QCheck_ounit.to_ounit2_test prop_monster_resets_if_door_closed;
