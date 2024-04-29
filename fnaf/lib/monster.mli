@@ -8,7 +8,20 @@ type difficulty =
 (** The difficulty of the game/monsters, influencing speed of progression *)
 
 val init_monsters : monster list
-(** [init_monsters] is a list of four monsters. *)
+(** [init_monsters] is a list of four monsters starting at location 5. *)
+
+val create_monster : string -> int -> float -> monster
+(** [make_monster name loc time] is a monster with name [name], starting
+location [loc], and last move time [time]. *)
+
+val get_name : monster -> string
+(** [get_name mon] is the name of monster [mon] *)
+
+val get_location : monster -> int
+(** [get_location mon] is the location of monster [mon] *)
+
+val get_time : monster -> float
+(** [get_time mon] is the last move time of monster [mon] *)
 
 val get_pace : difficulty -> monster -> bool -> float
 (** [get_pace diff name generator_on] is how long it takes monster [name] with 

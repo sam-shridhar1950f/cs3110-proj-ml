@@ -21,6 +21,13 @@ let init_monsters =
     { name = "Freddy Fazbear"; location = 5; last_move_time = 0. };
   ]
 
+let create_monster name loc time =
+  { name; location = loc; last_move_time = time }
+
+let get_name mon = mon.name
+let get_location mon = mon.location
+let get_time mon = mon.last_move_time
+
 let get_pace difficulty monster generator_on =
   let pace =
     match (difficulty, monster.name) with
