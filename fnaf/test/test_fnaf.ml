@@ -144,6 +144,14 @@ let test_consistency_across_runs _ =
   assert_equal ~printer:(fun lst -> String.concat "; " (List.map string_of_int lst))
     (get_locations first_run) (get_locations second_run)
 
+let test_extreme_pacing_changes _ =
+  let monsters = setup_monsters 5 0.0 in
+  advance_time monsters 5. Easy false false;
+  advance_time monsters 5. Hard false false;
+  advance_time monsters 5. Easy false false;
+  assert_location monsters [5; 5; 5; 5]
+
+
 (* Test rapid sequence of door state changes *)
 let test_rapid_door_state_changes _ =
   let monsters = setup_monsters 5 0.0 in
@@ -204,6 +212,17 @@ let test_individual_generator_effects _ =
       advance_time [ m ] (10. *. float_of_int (i + 1)) Hard false (i mod 2 = 0))
     monsters;
   assert_location monsters [ 5; 4; 4; 4 ]
+
+ let test_difficulty_impact _ =
+  let easy_pace = get_pace Easy (create_monster "Chica" 5 0.0) false in
+  let hard_pace = get_pace Hard (create_monster "Chica" 5 0.0) false in
+  assert_bool "Hard difficulty should result in a faster pace"
+    (hard_pace < easy_pace)
+
+
+
+
+
 (* Varying times and generator states should result in varied locations *)
 
 (* ----- QCheck Property Definitions ----- *)
@@ -284,6 +303,8 @@ let suite =
          "Invalid Time and Location" >:: test_invalid_time_and_location;
          "Consecutive Door Closures" >:: test_consecutive_door_closures;
          "Consistency Across Runs" >:: test_consistency_across_runs;
+         "Extreme Pacing Alterations" >:: test_extreme_pacing_changes;
+         "Test Impact of Difficulty" >:: test_difficulty_impact;
          QCheck_ounit.to_ounit2_test
            prop_monster_never_moves_to_negative_location;
          QCheck_ounit.to_ounit2_test prop_monster_resets_if_door_closed;
