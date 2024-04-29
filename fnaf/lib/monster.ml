@@ -7,6 +7,7 @@ type monster = {
 [@@@ocaml.warning "-37"]
 
 type difficulty =
+  | Tutorial
   | Easy
   | Normal
   | Hard
@@ -31,6 +32,7 @@ let get_time mon = mon.last_move_time
 let get_pace difficulty monster generator_on =
   let pace =
     match (difficulty, monster.name) with
+    | Tutorial, _ -> 10000000.0
     | Easy, "Chica" | Easy, "Foxy" | Easy, "Bonnie" | Easy, "Freddy Fazbear" ->
         30.0
     | Normal, "Chica" | Hard, "Foxy" -> 20.0
