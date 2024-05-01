@@ -236,6 +236,46 @@ let test_timing_precision _ =
       (abs_float (get_time m -. 0.1) < 1.))
     monsters
 
+let test_door_blockage_logic _ =
+  let monsters = setup_monsters 1 0.0 in
+  for _ = 1 to 10 do
+    advance_time monsters 1. Normal true false;  (* Door repeatedly closes as monsters approach *)
+  done;
+  List.iter
+    (fun m ->
+      assert_bool "Monsters should not bypass a closed door"
+        (get_location m > 0))
+    monsters
+  
+let test_game_stability_under_extreme_load _ =
+  let large_number_of_monsters = List.init 1000 (fun _ -> create_monster "TestMonster" 5 0.0) in
+  let rec simulate_actions monsters count =
+    if count = 0 then true
+    else begin
+      advance_time monsters 0.5 Hard false false;
+      simulate_actions monsters (count - 1)
+    end
+  in
+  assert_bool "Game should handle extreme load without crashing"
+    (simulate_actions large_number_of_monsters 100)
+
+let test_initial_game_setup_integrity _ =
+  let monsters = init_monsters in
+  List.iter (fun m ->
+    assert_equal ~printer:string_of_int 5 (get_location m)
+      ~msg:"All monsters should start at location 5")
+    monsters;
+  assert_equal ~printer:string_of_float 0.0 (List.fold_left (fun acc m -> acc +. get_time m) 0.0 monsters) 
+      ~msg:"Initial move times for all monsters should be 0.0"
+
+let test_door_closure_effectiveness _ =
+  let monsters = setup_monsters 1 0.0 in
+  advance_time monsters 5. Hard true false;  (* Door is closed as monsters approach location 0 *)
+  List.iter (fun m ->
+    assert_bool "Door closure should prevent monsters from reaching location 0"
+      (get_location m > 0))  (* Assuming location 0 is critical and door closure should stop them *)
+    monsters
+
 
 
 (* Varying times and generator states should result in varied locations *)
@@ -322,12 +362,15 @@ let suite =
          "Test Impact of Difficulty" >:: test_difficulty_impact;
          "Names" >:: test_monster_name_consistency;
          "Time Precision" >:: test_timing_precision;
+         "Door Block Logic" >:: test_door_blockage_logic;
+         "Game Stability" >:: test_game_stability_under_extreme_load;
+         "Initial Game Integrity" >:: test_initial_game_setup_integrity;
+         "Test Door Closure Effectiveness" >:: test_door_closure_effectiveness;
          QCheck_ounit.to_ounit2_test
            prop_monster_never_moves_to_negative_location;
          QCheck_ounit.to_ounit2_test prop_monster_resets_if_door_closed;
          QCheck_ounit.to_ounit2_test prop_generator_decreases_pace;
          QCheck_ounit.to_ounit2_test prop_consistent_movement;
-         (* Additional tests added until we reach a total of 40 *)
        ]
 
 (* ----- OUnit Runner ----- *)
