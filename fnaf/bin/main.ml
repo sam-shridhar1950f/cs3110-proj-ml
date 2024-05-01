@@ -1,4 +1,4 @@
-open Unix
+open! Unix
 open! Fnaf.Monster
 
 [@@@ocaml.warning "-69"]
@@ -7,15 +7,23 @@ type power_mode =
   | Normal
   | PowerSaving
 
+type hazard =
+  | PowerSurge
+  | LightMalfunction
+  | DoorJam
+
 type game_state = {
   mutable battery : int;
+  mutable hazard : hazard option; (* Optional hazard currently affecting the game *)
   start_time : float;
   mutable door_closed : bool;
+  mutable door_jammed : bool; (* Indicates if the door is currently jammed *)
   mutable light_on : bool;
+  mutable light_malfunction : bool; (* Indicates if the lights are malfunctioning *)
   mutable camera_statuses : (int * bool) list;
   mutable monsters : monster list;
   mutable power_mode : power_mode;
-  mutable generator_on : bool; (* New field to track generator status *)
+  mutable generator_on : bool;
   difficulty : difficulty;
 }
 
@@ -29,13 +37,16 @@ let game_hour state = int_of_float (elapsed_time state /. 86.0)
 let initial_state difficulty =
   {
     battery = 100;
-    start_time = gettimeofday ();
+    start_time = Unix.gettimeofday ();
     door_closed = false;
+    door_jammed = false; (* Initialize the door jammed status *)
     light_on = false;
+    light_malfunction = false; (* Initialize the light malfunction status *)
     camera_statuses = List.init 5 (fun i -> (i + 1, false));
     monsters = init_monsters;
     power_mode = Normal;
     generator_on = false;
+    hazard = None; (* Initialize hazard status *)
     difficulty;
   }
 
@@ -132,6 +143,23 @@ let update_camera_statuses state =
           Array.iter print_endline map_lines;
           print_newline ()
 
+let random_hazard state =
+  if Random.float 1.0 < 0.1 then (* 10% chance to trigger a hazard each hour *)
+    match Random.int 3 with
+    | 0 -> state.hazard <- Some PowerSurge; state.camera_statuses <- List.map (fun (id, _) -> (id, false)) state.camera_statuses; print_endline "A power surge has disabled all cameras!"
+    | 1 -> state.hazard <- Some LightMalfunction; state.light_malfunction <- true; print_endline "There is a malfunction in the lighting system!"
+    | 2 -> state.hazard <- Some DoorJam; state.door_jammed <- true; print_endline "The door mechanism is jammed!"
+    | _ -> ()
+
+let resolve_hazard state =
+  match state.hazard with
+  | Some PowerSurge -> state.camera_statuses <- List.map (fun (id, _) -> (id, true)) state.camera_statuses; 
+  | Some LightMalfunction -> state.light_malfunction <- false;
+  | Some DoorJam -> state.door_jammed <- false; 
+  | None -> ()
+  
+
+
 let process_command state command =
   match command with
   | "help" -> print_endline "List of Available Commands";
@@ -142,12 +170,18 @@ let process_command state command =
   print_endline "camera - Usage: 'camera' followed by the desired camera number. Uses some battery and informs the user if a monster is in view.";
   print_endline "map - displays a map of the building, including camera numbers and locations."
   | "door" ->
+    if state.door_jammed then
+      print_endline "The door is jammed and will not respond!"
+    else
       let power_cost = power_consumption_rates state "door" in
       state.door_closed <- not state.door_closed;
       state.battery <- state.battery - power_cost;
       print_endline
         (if state.door_closed then "Door closed." else "Door opened.")
   | "light" ->
+    if state.light_malfunction then
+      print_endline "The lights are malfunctioning and will not respond!"
+    else
       let power_cost = power_consumption_rates state "light" in
       state.light_on <- not state.light_on;
       state.battery <- state.battery - power_cost;
@@ -201,16 +235,17 @@ let list_to_string lst =
 let rec game_loop state =
   if time_is_up state then
     print_endline "Time's up. The night is over. You survived!"
-  else if state.battery <= 0 then print_endline "Battery dead. You lost!"
+  else if state.battery <= 0 then
+    print_endline "Battery dead. You lost!"
   else begin
-    Printf.printf "Hour: %d. Battery: %d%%. Type a command: " (game_hour state)
-      state.battery;
+    random_hazard state; (* Check for new hazards *)
+    Printf.printf "Hour: %d. Battery: %d%%. Type a command: " (game_hour state) state.battery;
     let command = read_line () in
     process_command state command;
+    resolve_hazard state; (* Resolve any existing hazards *)
     let game_over, monster_names = move_monsters_and_check_game_over state in
     if game_over then
-      Printf.printf "A monster got you! It was %s! Game over.\n"
-        (list_to_string monster_names)
+      Printf.printf "A monster got you! It was %s! Game over.\n" (list_to_string monster_names)
     else game_loop state
   end
 
