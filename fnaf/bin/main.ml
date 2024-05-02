@@ -1,7 +1,18 @@
 open! Unix
 open! Fnaf.Monster
+open! ANSITerminal
 
 [@@@ocaml.warning "-69"]
+
+let hourly_messages = [
+  "The clock strikes midnight. The faint hum of electronics is all that can be heard.";
+  "It's 1 AM. Somewhere in the darkness, gears turn and mechanisms whir.";
+  "2 AM. You hear a distant shuffling. Something is moving.";
+  "3 AM. The walls seem to close in around you. Keep watching those cameras.";
+  "4 AM. A chill runs down your spine. The night is almost over, but danger increases.";
+  "5 AM. The dawn is near. Just a little longer, you can make it!";
+]
+
 
 type power_mode =
   | Normal
@@ -14,17 +25,18 @@ type hazard =
 
 type game_state = {
   mutable battery : int;
-  mutable hazard : hazard option; (* Optional hazard currently affecting the game *)
   start_time : float;
   mutable door_closed : bool;
-  mutable door_jammed : bool; (* Indicates if the door is currently jammed *)
+  mutable door_jammed : bool;
+  mutable hazard : hazard option; (* Optional hazard currently affecting the game *)
   mutable light_on : bool;
-  mutable light_malfunction : bool; (* Indicates if the lights are malfunctioning *)
+  mutable light_malfunction : bool;
   mutable camera_statuses : (int * bool) list;
   mutable monsters : monster list;
   mutable power_mode : power_mode;
   mutable generator_on : bool;
   difficulty : difficulty;
+  mutable last_announced_hour : int;  (* New field to track the last announced hour *)
 }
 
 [@@@ocaml.warning "+69"]
@@ -39,16 +51,18 @@ let initial_state difficulty =
     battery = 100;
     start_time = Unix.gettimeofday ();
     door_closed = false;
-    door_jammed = false; (* Initialize the door jammed status *)
+    door_jammed = false;
     light_on = false;
-    light_malfunction = false; (* Initialize the light malfunction status *)
+    light_malfunction = false;
     camera_statuses = List.init 5 (fun i -> (i + 1, false));
     monsters = init_monsters;
     power_mode = Normal;
     generator_on = false;
-    hazard = None; (* Initialize hazard status *)
+    hazard = None;
     difficulty;
+    last_announced_hour = -1;  (* Initialize to -1 so it will definitely update on the first hour *)
   }
+
 
 let power_consumption_rates state action : int =
   match (state.power_mode, action) with
@@ -144,11 +158,19 @@ let update_camera_statuses state =
           print_newline ()
 
 let random_hazard state =
-  if Random.float 1.0 < 0.1 then (* 10% chance to trigger a hazard each hour *)
+  if Random.float 1.0 < 0.05 then (* 5% chance to trigger a hazard each hour *)
     match Random.int 3 with
     | 0 -> state.hazard <- Some PowerSurge; state.camera_statuses <- List.map (fun (id, _) -> (id, false)) state.camera_statuses; print_endline "A power surge has disabled all cameras!"
     | 1 -> state.hazard <- Some LightMalfunction; state.light_malfunction <- true; print_endline "There is a malfunction in the lighting system!"
     | 2 -> state.hazard <- Some DoorJam; state.door_jammed <- true; print_endline "The door mechanism is jammed!"
+    | _ -> ()
+
+let random_events state =
+  if Random.float 1.0 < 0.15 then  (* 15% chance for a random event each hour *)
+    match Random.int 3 with
+    | 0 -> print_endline "You notice an old newspaper article about missing persons. Ignore it and focus!";
+    | 1 -> print_endline "The air grows cold. Your camera flickers briefly. Something feels very wrong.";
+    | 2 -> state.door_jammed <- true; print_endline "You hear a loud bang.";
     | _ -> ()
 
 let resolve_hazard state =
@@ -233,12 +255,19 @@ let list_to_string lst =
   | items -> aux "" items
 
 let rec game_loop state =
+  let current_hour = game_hour state in
   if time_is_up state then
     print_endline "Time's up. The night is over. You survived!"
   else if state.battery <= 0 then
     print_endline "Battery dead. You lost!"
   else begin
+    if current_hour <> state.last_announced_hour then begin
+      if current_hour < List.length hourly_messages then
+        print_endline (List.nth hourly_messages current_hour);
+      state.last_announced_hour <- current_hour;  (* Update the last announced hour *)
+    end;  (* Note the semicolon here *)
     random_hazard state; (* Check for new hazards *)
+    random_events state;  (* Trigger potential random events *)
     Printf.printf "Hour: %d. Battery: %d%%. Type a command: " (game_hour state) state.battery;
     let command = read_line () in
     process_command state command;
@@ -262,7 +291,7 @@ let choose_difficulty () : difficulty =
       Normal
   
 let start_or_tutorial () = 
-  print_endline "If you are familiar with FNAF gameplay, type start to begin. Otherwise, use the tutorial command to experiment with the game.";
+  print_endline "If you are familiar with FNAF gameplay, type start to begin. Otherwise, use the tutorial command to experiment with the game.\n";
   match read_line () with
   | "start" -> let difficulty = choose_difficulty () in
   let state = initial_state difficulty in
@@ -274,7 +303,38 @@ let start_or_tutorial () =
   | _ -> ()
 
 
+let read_ascii_art_from_file filename =
+  let input_channel = open_in filename in
+  let rec read_lines accum =
+    try
+      let line = input_line input_channel in
+      read_lines (accum ^ line ^ "\n")  
+    with End_of_file ->  
+      accum
+  in
+  try
+    let art = read_lines "" in
+    close_in input_channel; 
+    art
+  with e ->
+    close_in_noerr input_channel;  (* Ensure the file is closed even if an error occurs *)
+    raise e  (* Re-raise the exception after handling it *)
+
 let () =
-  print_endline "Welcome to Five Nights at Freddy's OCaml Edition.";
-  print_endline "Use the help command for a list of available commands.";
+  print_string [ANSITerminal.yellow] "Welcome to Five Nights at Freddy's OCaml Edition.\n\n";
+  print_string [ANSITerminal.red] "Use the help command for a list of available commands.\n\n";
+  print_string [ANSITerminal.blue] "Developed by Larry Tao, Sam Shridhar, Rohan Mahajan, Jacob Huang\n\n";
+  print_string [ANSITerminal.blue] "Tutorial Mode: Monsters do not move towards you. Feel free to explore the commands.";
+  print_string [ANSITerminal.blue] "Easy Mode: Monsters move slowly towards you.";
+  print_string [ANSITerminal.blue] "Normal Mode: Monsters move at a normal pace towards you.";
+  print_string [ANSITerminal.blue] "Hard Mode: Monsters move at a fast pace towards you.";
+  let filename = "data/logo.txt" in
+  try
+    let ascii_art = read_ascii_art_from_file filename in
+    print_endline ascii_art;  (* Ensure this line ends with a semicolon *)
+    start_or_tutorial ()      (* Proceed with the next function call *)
+  with
+  | Sys_error msg -> print_endline ("File error: " ^ msg);  (* End with a semicolon if more code follows *)
+  | e -> 
+    print_endline ("An unexpected error occurred: " ^ Printexc.to_string e);  (* Ensure this line ends with a semicolon *)
   start_or_tutorial ()

@@ -1,6 +1,7 @@
 (* test_monster.ml *)
 open OUnit2
 open Fnaf.Monster
+
 open QCheck
 
 (* ----- Helper Functions ----- *)
@@ -273,6 +274,20 @@ let test_monster_name_uniqueness _ =
   let unique_names = List.sort_uniq compare names in
   assert_equal (List.length names) (List.length unique_names)
 
+let test_individual_monster_creation _ =
+  let monster = create_monster "Bonnie" 3 10.0 in
+  assert_equal "Bonnie" (get_name monster);
+  assert_equal 3 (get_location monster);
+  assert_equal 10.0 (get_time monster)
+
+let test_monster_movement_at_boundary_conditions _ =
+  let monster_at_min = create_monster "EdgeCaseMin" 0 0.0 in
+  let monster_at_max = create_monster "EdgeCaseMax" 5 0.0 in
+  let _ = move_monster monster_at_min 10.0 Normal false false in 
+  let _ = move_monster monster_at_max 10.0 Normal false false in
+  assert_equal 0 (get_location monster_at_min); (* Expect no movement beyond lower boundary *)
+  assert_equal 5 (get_location monster_at_max)  (* Expect normal decrement in location *)
+
 
 (* Varying times and generator states should result in varied locations *)
 
@@ -367,6 +382,8 @@ let suite =
          "Game Stability" >:: test_game_stability_under_extreme_load;
          "Test Door Closure Effectiveness" >:: test_door_closure_effectiveness;
          "Name Uniqueness" >:: test_monster_name_uniqueness;
+         "Individual Monster Creation" >:: test_individual_monster_creation;
+         "Monster Movement at Boundary Conditions" >:: test_monster_movement_at_boundary_conditions;
          QCheck_ounit.to_ounit2_test
            prop_monster_never_moves_to_negative_location;
          QCheck_ounit.to_ounit2_test prop_monster_resets_if_door_closed;
