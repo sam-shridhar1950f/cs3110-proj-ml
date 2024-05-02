@@ -1,7 +1,6 @@
 (* test_monster.ml *)
 open OUnit2
 open Fnaf.Monster
-
 open QCheck
 
 (* ----- Helper Functions ----- *)
@@ -45,6 +44,38 @@ let gen_triple = QCheck.Gen.triple gen_monster gen_difficulty gen_bool
 let gen_monster_list = QCheck.Gen.list gen_monster
 
 (* ----- Test Definitions ----- *)
+
+let test_name _ =
+  let mon = create_monster "michael" 5 0.0 in
+  assert_equal "michael" (get_name mon)
+
+let test_name_empty _ =
+  let mon = create_monster "" 5 0.0 in
+  assert_equal "" (get_name mon)
+
+let test_location _ =
+  let mon = create_monster "michael" 5 0.0 in
+  assert_equal 5 (get_location mon)
+
+let test_location_max _ =
+  let mon = create_monster "michael" max_int 0.0 in
+  assert_equal max_int (get_location mon)
+
+let test_location_min _ =
+  let mon = create_monster "michael" min_int 0.0 in
+  assert_equal min_int (get_location mon)
+
+let test_time _ =
+  let mon = create_monster "michael" 5 0.0 in
+  assert_equal 0.0 (get_time mon)
+
+let test_time_max _ =
+  let mon = create_monster "michael" 5 (float_of_int max_int) in
+  assert_equal (float_of_int max_int) (get_time mon)
+
+let test_time_min _ =
+  let mon = create_monster "michael" 5 (float_of_int min_int) in
+  assert_equal (float_of_int min_int) (get_time mon)
 
 (* Test that all monsters start at the correct initial location *)
 let test_initial_positions _ =
@@ -119,30 +150,34 @@ let test_random_resets_within_bounds _ =
 let test_extreme_time_advancement _ =
   let monsters = setup_monsters 5 0.0 in
   advance_time monsters 31536000.0 (* 1 year in seconds *) Easy false false;
-  assert_location monsters [4; 4; 4; 4]  (* Expected locations after handling extreme time advancement *)
-  
+  assert_location monsters [ 4; 4; 4; 4 ]
+(* Expected locations after handling extreme time advancement *)
+
 let test_invalid_time_and_location _ =
   let monsters = setup_monsters (-1) (-1.0) in
   List.iter
     (fun m ->
       assert_bool "Monster was created with invalid location or time"
-        (get_location m < 0 || get_time m < 0.0)
-    ) monsters
+        (get_location m < 0 || get_time m < 0.0))
+    monsters
 
- let test_consecutive_door_closures _ =
+let test_consecutive_door_closures _ =
   let monsters = setup_monsters 1 0.0 in
   for _ = 1 to 5 do
-    advance_time monsters 1. Hard true false;  (* Door closed *)
-    advance_time monsters 1. Hard false false;  (* Door opened *)
+    advance_time monsters 1. Hard true false;
+    (* Door closed *)
+    advance_time monsters 1. Hard false false (* Door opened *)
   done;
-  assert_location monsters [1; 1; 1; 1]  (* Check for expected behavior after consecutive door actions *)
+  assert_location monsters [ 1; 1; 1; 1 ]
+(* Check for expected behavior after consecutive door actions *)
 
 let test_consistency_across_runs _ =
   let first_run = setup_monsters 5 0.0 in
   let second_run = setup_monsters 5 0.0 in
   advance_time first_run 10. Normal false false;
   advance_time second_run 10. Normal false false;
-  assert_equal ~printer:(fun lst -> String.concat "; " (List.map string_of_int lst))
+  assert_equal
+    ~printer:(fun lst -> String.concat "; " (List.map string_of_int lst))
     (get_locations first_run) (get_locations second_run)
 
 let test_extreme_pacing_changes _ =
@@ -150,8 +185,7 @@ let test_extreme_pacing_changes _ =
   advance_time monsters 5. Easy false false;
   advance_time monsters 5. Hard false false;
   advance_time monsters 5. Easy false false;
-  assert_location monsters [5; 5; 5; 5]
-
+  assert_location monsters [ 5; 5; 5; 5 ]
 
 (* Test rapid sequence of door state changes *)
 let test_rapid_door_state_changes _ =
@@ -214,12 +248,11 @@ let test_individual_generator_effects _ =
     monsters;
   assert_location monsters [ 5; 4; 4; 4 ]
 
- let test_difficulty_impact _ =
+let test_difficulty_impact _ =
   let easy_pace = get_pace Easy (create_monster "Chica" 5 0.0) false in
   let hard_pace = get_pace Hard (create_monster "Chica" 5 0.0) false in
   assert_bool "Hard difficulty should result in a faster pace"
     (hard_pace < easy_pace)
-
 
 let test_monster_name_consistency _ =
   let monsters = init_monsters in
@@ -231,25 +264,28 @@ let test_monster_name_consistency _ =
 
 let test_timing_precision _ =
   let monsters = setup_monsters 5 0.0 in
-  List.iter (fun m -> advance_time [m] 0.1 Hard false false) monsters;
-  List.iter (fun m ->
-    assert_bool "Timing updates should be precise to the second"
-      (abs_float (get_time m -. 0.1) < 1.))
+  List.iter (fun m -> advance_time [ m ] 0.1 Hard false false) monsters;
+  List.iter
+    (fun m ->
+      assert_bool "Timing updates should be precise to the second"
+        (abs_float (get_time m -. 0.1) < 1.))
     monsters
 
 let test_door_blockage_logic _ =
   let monsters = setup_monsters 1 0.0 in
   for _ = 1 to 10 do
-    advance_time monsters 1. Normal true false;  (* Door repeatedly closes as monsters approach *)
+    advance_time monsters 1. Normal true false
+    (* Door repeatedly closes as monsters approach *)
   done;
   List.iter
     (fun m ->
-      assert_bool "Monsters should not bypass a closed door"
-        (get_location m > 0))
+      assert_bool "Monsters should not bypass a closed door" (get_location m > 0))
     monsters
-  
+
 let test_game_stability_under_extreme_load _ =
-  let large_number_of_monsters = List.init 1000 (fun _ -> create_monster "TestMonster" 5 0.0) in
+  let large_number_of_monsters =
+    List.init 1000 (fun _ -> create_monster "TestMonster" 5 0.0)
+  in
   let rec simulate_actions monsters count =
     if count = 0 then true
     else begin
@@ -262,10 +298,14 @@ let test_game_stability_under_extreme_load _ =
 
 let test_door_closure_effectiveness _ =
   let monsters = setup_monsters 1 0.0 in
-  advance_time monsters 5. Hard true false;  (* Door is closed as monsters approach location 0 *)
-  List.iter (fun m ->
-    assert_bool "Door closure should prevent monsters from reaching location 0"
-      (get_location m > 0))  (* Assuming location 0 is critical and door closure should stop them *)
+  advance_time monsters 5. Hard true false;
+  (* Door is closed as monsters approach location 0 *)
+  List.iter
+    (fun m ->
+      assert_bool
+        "Door closure should prevent monsters from reaching location 0"
+        (get_location m > 0))
+      (* Assuming location 0 is critical and door closure should stop them *)
     monsters
 
 let test_monster_name_uniqueness _ =
@@ -283,11 +323,12 @@ let test_individual_monster_creation _ =
 let test_monster_movement_at_boundary_conditions _ =
   let monster_at_min = create_monster "EdgeCaseMin" 0 0.0 in
   let monster_at_max = create_monster "EdgeCaseMax" 5 0.0 in
-  let _ = move_monster monster_at_min 10.0 Normal false false in 
+  let _ = move_monster monster_at_min 10.0 Normal false false in
   let _ = move_monster monster_at_max 10.0 Normal false false in
-  assert_equal 0 (get_location monster_at_min); (* Expect no movement beyond lower boundary *)
-  assert_equal 5 (get_location monster_at_max)  (* Expect normal decrement in location *)
-
+  assert_equal 0 (get_location monster_at_min);
+  (* Expect no movement beyond lower boundary *)
+  assert_equal 5 (get_location monster_at_max)
+(* Expect normal decrement in location *)
 
 (* Varying times and generator states should result in varied locations *)
 
@@ -345,15 +386,18 @@ let prop_consistent_movement =
       in
       List.for_all (fun did_move -> did_move) moved_monsters)
 
-
-
-
-
-
 (* ----- Test Suite ----- *)
 let suite =
   "Monster Tests"
   >::: [
+         "Get Name" >:: test_name;
+         "Get Empty Name" >:: test_name_empty;
+         "Get Location" >:: test_location;
+         "Get Max Location" >:: test_location_max;
+         "Get Min Location" >:: test_location_min;
+         "Get Time" >:: test_time;
+         "Get Max Time" >:: test_time_max;
+         "Get Min Time" >:: test_time_min;
          "Initial Positions" >:: test_initial_positions;
          "Movement Without Generator" >:: test_movement_without_generator;
          "Movement With Generator" >:: test_movement_with_generator;
@@ -383,7 +427,8 @@ let suite =
          "Test Door Closure Effectiveness" >:: test_door_closure_effectiveness;
          "Name Uniqueness" >:: test_monster_name_uniqueness;
          "Individual Monster Creation" >:: test_individual_monster_creation;
-         "Monster Movement at Boundary Conditions" >:: test_monster_movement_at_boundary_conditions;
+         "Monster Movement at Boundary Conditions"
+         >:: test_monster_movement_at_boundary_conditions;
          QCheck_ounit.to_ounit2_test
            prop_monster_never_moves_to_negative_location;
          QCheck_ounit.to_ounit2_test prop_monster_resets_if_door_closed;
