@@ -1,6 +1,7 @@
 (library
  (inline_tests)
  (name fnaf)
- (modules Monster)
+ (modules Monster Game)
+ (libraries unix)
  (preprocess
   (pps ppx_inline_test)))
