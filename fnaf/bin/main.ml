@@ -320,7 +320,7 @@ let rec game_loop state =
   end
 
 let choose_difficulty () : difficulty =
-  print_endline "Choose difficulty: 1 - Easy, 2 - Normal, 3 - Hard";
+  print_endline "\nChoose difficulty: 1 - Easy, 2 - Normal, 3 - Hard";
   let choice = read_line () in
   match choice with
   | "1" -> Easy
@@ -330,10 +330,10 @@ let choose_difficulty () : difficulty =
       print_endline "Invalid choice, defaulting to Normal.";
       Normal
 
-let start_or_tutorial () =
+let rec start_or_tutorial () =
   print_endline
-    "If you are familiar with FNAF gameplay, type start to begin. Otherwise, \
-     use the tutorial command to experiment with the game.\n";
+    "If you are familiar with FNAF gameplay, type \"start\" to begin. Use the \
+     \"tutorial\" command to experiment with the game.";
   match read_line () with
   | "start" ->
       let difficulty = choose_difficulty () in
@@ -344,7 +344,7 @@ let start_or_tutorial () =
       let state = initial_state Tutorial in
       print_map ();
       game_loop state
-  | _ -> ()
+  | _ -> start_or_tutorial ()
 
 let read_ascii_art_from_file filename =
   let input_channel = open_in filename in
@@ -372,13 +372,13 @@ let () =
     "Developed by Larry Tao, Sam Shridhar, Rohan Mahajan, Jacob Huang\n\n";
   print_string [ ANSITerminal.blue ]
     "Tutorial Mode: Monsters do not move towards you. Feel free to explore the \
-     commands.";
+     commands.\n";
   print_string [ ANSITerminal.blue ]
-    "Easy Mode: Monsters move slowly towards you.";
+    "Easy Mode: Monsters move slowly towards you.\n";
   print_string [ ANSITerminal.blue ]
-    "Normal Mode: Monsters move at a normal pace towards you.";
+    "Normal Mode: Monsters move at a normal pace towards you.\n";
   print_string [ ANSITerminal.blue ]
-    "Hard Mode: Monsters move at a fast pace towards you.";
+    "Hard Mode: Monsters move at a fast pace towards you.\n";
   let filename = "data/logo.txt" in
   try
     let ascii_art = read_ascii_art_from_file filename in
