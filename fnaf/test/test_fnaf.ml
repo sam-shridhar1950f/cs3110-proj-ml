@@ -330,6 +330,64 @@ let test_monster_movement_at_boundary_conditions _ =
   assert_equal 5 (get_location monster_at_max)
 (* Expect normal decrement in location *)
 
+let test_update_monsters _ =
+  let monsters = setup_monsters 5 0.0 in
+  let update = update_monsters monsters 22. Normal true false in
+  assert_equal (false, []) update;
+  assert_location monsters [ 4; 4; 5; 5 ]
+
+let test_update_monsters_long _ =
+  let monsters = setup_monsters 5 0.0 in
+  let update = update_monsters monsters 62. Normal true false in
+  assert_equal (false, []) update;
+  assert_location monsters [ 4; 4; 4; 4 ]
+
+let test_update_monsters_open_office _ =
+  let monsters = setup_monsters 1 0.0 in
+  let update = update_monsters monsters 22. Normal false false in
+  assert_equal (true, [ "Chica"; "Foxy" ]) update;
+  assert_location monsters [ 0; 0; 1; 1 ]
+
+let test_update_monsters_closed_office _ =
+  let monsters = setup_monsters 1 0.0 in
+  let update = update_monsters monsters 22. Normal true false in
+  assert_equal (false, []) update
+
+let test_update_monsters_generator_on _ =
+  let monsters = setup_monsters 2 0.0 in
+  let update = update_monsters monsters 12. Normal true true in
+  assert_equal (false, []) update;
+  assert_location monsters [ 1; 1; 2; 2 ]
+
+let test_update_monsters_generator_on_open_office _ =
+  let monsters = setup_monsters 1 0.0 in
+  let update = update_monsters monsters 8. Normal false true in
+  assert_equal (true, [ "Foxy" ]) update;
+  assert_location monsters [ 1; 0; 1; 1 ]
+
+let test_update_monsters_generator_on_closed_office _ =
+  let monsters = setup_monsters 1 0.0 in
+  let update = update_monsters monsters 12. Normal true true in
+  assert_equal (false, []) update
+
+let test_get_monsters_at_location _ =
+  let monsters = setup_monsters 5 0.0 in
+  let _ = update_monsters monsters 22. Normal true false in
+  assert_equal [ "Chica"; "Foxy" ] (get_monsters_at_location monsters 4);
+  assert_equal
+    [ "Bonnie"; "Freddy Fazbear" ]
+    (get_monsters_at_location monsters 5);
+  let _ = update_monsters monsters 27. Normal true false in
+  assert_equal
+    [ "Chica"; "Foxy"; "Bonnie" ]
+    (get_monsters_at_location monsters 4);
+  assert_equal [ "Freddy Fazbear" ] (get_monsters_at_location monsters 5);
+  let _ = update_monsters monsters 38. Normal true false in
+  assert_equal [ "Foxy" ] (get_monsters_at_location monsters 3);
+  assert_equal
+    [ "Chica"; "Bonnie"; "Freddy Fazbear" ]
+    (get_monsters_at_location monsters 4)
+
 (* Varying times and generator states should result in varied locations *)
 
 (* ----- QCheck Property Definitions ----- *)
@@ -429,6 +487,20 @@ let suite =
          "Individual Monster Creation" >:: test_individual_monster_creation;
          "Monster Movement at Boundary Conditions"
          >:: test_monster_movement_at_boundary_conditions;
+         "Update Monsters" >:: test_update_monsters;
+         "Update Monsters Long Duration Consistent Locations"
+         >:: test_update_monsters_long;
+         "Update Monsters Open Office Rooms and Game Over"
+         >:: test_update_monsters_open_office;
+         "Update Monsters Closed Office Rooms"
+         >:: test_update_monsters_closed_office;
+         "Update Monsters Generator On Rooms"
+         >:: test_update_monsters_generator_on;
+         "Update Monsters Generator On Rooms Open Office"
+         >:: test_update_monsters_generator_on_open_office;
+         "Update Monsters Generator On Rooms Closed Office"
+         >:: test_update_monsters_generator_on_closed_office;
+         "Get Monsters at Location" >:: test_get_monsters_at_location;
          QCheck_ounit.to_ounit2_test
            prop_monster_never_moves_to_negative_location;
          QCheck_ounit.to_ounit2_test prop_monster_resets_if_door_closed;

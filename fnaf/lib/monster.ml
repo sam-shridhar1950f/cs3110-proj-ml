@@ -57,14 +57,17 @@ let move_monster monster current_time difficulty door_closed generator_on =
   else false
 
 let update_monsters monsters current_time difficulty door_closed gen_on =
-  List.fold_left
-    (fun (game_over, monsters_in_office) monster ->
-      let reached_player =
-        move_monster monster current_time difficulty door_closed gen_on
-      in
-      if reached_player then (true, monster.name :: monsters_in_office)
-      else (game_over, monsters_in_office))
-    (false, []) monsters
+  let intruded, intruders =
+    List.fold_left
+      (fun (game_over, monsters_in_office) monster ->
+        let reached_player =
+          move_monster monster current_time difficulty door_closed gen_on
+        in
+        if reached_player then (true, monster.name :: monsters_in_office)
+        else (game_over, monsters_in_office))
+      (false, []) monsters
+  in
+  (intruded, List.rev intruders)
 
 let get_locations monsters = List.map (fun m -> m.location) monsters
 
