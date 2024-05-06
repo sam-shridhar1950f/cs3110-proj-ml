@@ -1,6 +1,7 @@
 (* test_monster.ml *)
 open OUnit2
 open Fnaf.Monster
+open Fnaf.Game
 open QCheck
 
 (* ----- Helper Functions ----- *)
@@ -388,6 +389,45 @@ let test_get_monsters_at_location _ =
     [ "Chica"; "Bonnie"; "Freddy Fazbear" ]
     (get_monsters_at_location monsters 4)
 
+let test_no_negative_locations _ =
+  let monsters = setup_monsters 1 0.0 in
+  advance_time monsters (-10.0) Normal false false;
+  List.iter
+    (fun m ->
+      assert_bool "Monsters should not have negative locations"
+        (get_location m >= 0))
+    monsters
+
+let test_monster_no_movement_short_interval _ =
+  let monster = create_monster "Freddy Fazbear" 5 0.0 in
+  ignore (move_monster monster 5.0 Normal false false);  (* Assuming pace > 5.0 *)
+  assert_equal 5 (get_location monster)
+
+let test_monster_initial_locations_not_above_5 _ =
+  let monsters = init_monsters in  (* Assuming this initializes all monsters *)
+  List.iter 
+    (fun monster ->
+      assert_bool "Monster location should not exceed 5"
+        (get_location monster <= 5))
+    monsters
+
+
+let test_monster_count_never_exceeds_four _ =
+  let monsters = init_monsters in  (* Assume this function initializes the game's monsters *)
+  let num_monsters = List.length monsters in
+  assert_bool "Number of monsters should not exceed four" (num_monsters <= 4)
+
+let test_list_to_string _ =
+  (* Test empty list *)
+  let empty = list_to_string [] in
+  assert_equal "" empty ~msg:"Should handle empty list";
+
+  (* Test single element list *)
+  let single = list_to_string ["Hello"] in
+  assert_equal "Hello" single ~msg:"Should handle single element list"
+    
+
+
 (* Varying times and generator states should result in varied locations *)
 
 (* ----- QCheck Property Definitions ----- *)
@@ -501,6 +541,11 @@ let suite =
          "Update Monsters Generator On Rooms Closed Office"
          >:: test_update_monsters_generator_on_closed_office;
          "Get Monsters at Location" >:: test_get_monsters_at_location;
+         "Test No Negative Locations" >:: test_no_negative_locations;
+         "No Movement in Short Time Spans" >:: test_monster_no_movement_short_interval;
+         "Locations Never More Than 5" >:: test_monster_initial_locations_not_above_5;
+         "Number of Monsters Never Exceeds Four" >::  test_monster_count_never_exceeds_four;
+         "List to String Function" >:: test_list_to_string;
          QCheck_ounit.to_ounit2_test
            prop_monster_never_moves_to_negative_location;
          QCheck_ounit.to_ounit2_test prop_monster_resets_if_door_closed;
