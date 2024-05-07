@@ -400,20 +400,22 @@ let test_no_negative_locations _ =
 
 let test_monster_no_movement_short_interval _ =
   let monster = create_monster "Freddy Fazbear" 5 0.0 in
-  ignore (move_monster monster 5.0 Normal false false);  (* Assuming pace > 5.0 *)
+  ignore (move_monster monster 5.0 Normal false false);
+  (* Assuming pace > 5.0 *)
   assert_equal 5 (get_location monster)
 
 let test_monster_initial_locations_not_above_5 _ =
-  let monsters = init_monsters in  (* Assuming this initializes all monsters *)
-  List.iter 
+  let monsters = init_monsters in
+  (* Assuming this initializes all monsters *)
+  List.iter
     (fun monster ->
       assert_bool "Monster location should not exceed 5"
         (get_location monster <= 5))
     monsters
 
-
 let test_monster_count_never_exceeds_four _ =
-  let monsters = init_monsters in  (* Assume this function initializes the game's monsters *)
+  let monsters = init_monsters in
+  (* Assume this function initializes the game's monsters *)
   let num_monsters = List.length monsters in
   assert_bool "Number of monsters should not exceed four" (num_monsters <= 4)
 
@@ -423,9 +425,9 @@ let test_list_to_string _ =
   assert_equal "" empty ~msg:"Should handle empty list";
 
   (* Test single element list *)
-  let single = list_to_string ["Hello"] in
+  let single = list_to_string [ "Hello" ] in
   assert_equal "Hello" single ~msg:"Should handle single element list"
-    
+
 let test_monsters_differential_movement _ =
   let monster1 = create_monster "Foxy" 5 0.0 in
   let monster2 = create_monster "Bonnie" 1 0.0 in
@@ -440,26 +442,31 @@ let test_multiple_generators_impact_pace _ =
   let pace_with_generator = get_pace Hard monster true in
   let pace_after_double_toggle = get_pace Hard monster false in
   assert_equal pace_initial pace_after_double_toggle;
-  assert_bool "Pace with generator should be less" (pace_with_generator < pace_initial)
+  assert_bool "Pace with generator should be less"
+    (pace_with_generator < pace_initial)
 
 let test_monster_consecutive_movements _ =
   let monster = create_monster "Chica" 5 0.0 in
-  ignore (move_monster monster 30.0 Normal false false);  (* First move *)
+  ignore (move_monster monster 30.0 Normal false false);
+  (* First move *)
   let location_after_first_move = get_location monster in
-  ignore (move_monster monster 60.0 Normal false false);  (* Second move *)
+  ignore (move_monster monster 60.0 Normal false false);
+  (* Second move *)
   let location_after_second_move = get_location monster in
   assert (location_after_second_move < location_after_first_move)
 
-
 let test_game_end_condition _ =
-  let monsters = [
-    create_monster "Freddy" 0 0.0;
-    create_monster "Bonnie" 0 0.0;
-    create_monster "Chica" 0 0.0;
-    create_monster "Foxy" 0 0.0
-  ] in
-  let (game_over, _) = update_monsters monsters 30.0 Normal false false in
-  assert_bool "Game should end when all monsters converge at location 0" game_over
+  let monsters =
+    [
+      create_monster "Freddy" 0 0.0;
+      create_monster "Bonnie" 0 0.0;
+      create_monster "Chica" 0 0.0;
+      create_monster "Foxy" 0 0.0;
+    ]
+  in
+  let game_over, _ = update_monsters monsters 30.0 Normal false false in
+  assert_bool "Game should end when all monsters converge at location 0"
+    game_over
 
 let test_monster_reacts_to_hour_change _ =
   let monster = create_monster "Bonnie" 5 0.0 in
@@ -472,39 +479,48 @@ let test_monster_reacts_to_hour_change _ =
   assert_bool "Monster should move more aggressively after an hour change"
     (location_after_hour_change < location_before_hour_change)
 
-    
 let test_game_behavior_when_time_freezes _ =
   let initial_time = Unix.gettimeofday () in
   let monster = create_monster "Foxy" 5 initial_time in
-  Unix.sleep 2;  (* Simulate game pausing for 2 seconds, no game time should pass *)
-  ignore (move_monster monster initial_time Normal false false);  (* Move monster at the same initial time *)
-  assert_equal ~msg:"Monster should not move when game time is frozen" 5 (get_location monster)
+  Unix.sleep 2;
+  (* Simulate game pausing for 2 seconds, no game time should pass *)
+  ignore (move_monster monster initial_time Normal false false);
+  (* Move monster at the same initial time *)
+  assert_equal ~msg:"Monster should not move when game time is frozen" 5
+    (get_location monster)
 
 let test_timing_precision_on_monster_moves _ =
   let monster = create_monster "Bonnie" 5 0.0 in
-  ignore (move_monster monster 15.0 Normal false false);  (* Monster moves after 15 seconds *)
+  ignore (move_monster monster 15.0 Normal false false);
+  (* Monster moves after 15 seconds *)
   assert_equal ~msg:"Monster should not move too soon" 5 (get_location monster);
-  ignore (move_monster monster 30.0 Normal false false);  (* Now it should move *)
+  ignore (move_monster monster 30.0 Normal false false);
+  (* Now it should move *)
   assert_bool "Monster should have moved" (get_location monster < 5)
-
 
 let test_full_night_monster_movement_simulation _ =
   let monsters = init_monsters in
   let simulate_hourly_movements hour =
-    List.iter (fun m ->
-      let time = float_of_int (hour * 3600) in  (* Convert hours to seconds *)
-      let difficulty = if hour < 3 then Normal else Hard in
-      let door_status = hour mod 2 = 0 in  (* Alternate door status every hour *)
-      ignore (move_monster m time difficulty door_status false);
-    ) monsters;
-    List.iter (fun m ->
-      assert_bool "Monsters should not move into the room when door is closed" 
-        ((get_location m > 0) || not (hour mod 2 = 0))
-    ) monsters
+    List.iter
+      (fun m ->
+        let time = float_of_int (hour * 3600) in
+        (* Convert hours to seconds *)
+        let difficulty = if hour < 3 then Normal else Hard in
+        let door_status = hour mod 2 = 0 in
+        (* Alternate door status every hour *)
+        ignore (move_monster m time difficulty door_status false))
+      monsters;
+    List.iter
+      (fun m ->
+        assert_bool "Monsters should not move into the room when door is closed"
+          (get_location m > 0 || not (hour mod 2 = 0)))
+      monsters
   in
-  for hour = 1 to 6 do  (* Simulate movements from 1 AM to 6 AM *)
+  for hour = 1 to 6 do
+    (* Simulate movements from 1 AM to 6 AM *)
     simulate_hourly_movements hour
   done;
+<<<<<<< HEAD
   List.iter (fun m ->  (* Assert that no monster ends at the start location *)
     assert_bool "No monster should be at the initial position at the end of the night" 
       (get_location m <> 5)
@@ -532,6 +548,15 @@ let test_monsters_locations_overlap _ =
     (List.length overlaps > 0)
 
 
+=======
+  List.iter
+    (fun m ->
+      (* Assert that no monster ends at the start location *)
+      assert_bool
+        "No monster should be at the initial position at the end of the night"
+        (get_location m <> 5))
+    monsters
+>>>>>>> 39897366507d9a356207ed96ed91d7c93b668ed4
 
 (* Varying times and generator states should result in varied locations *)
 
@@ -647,15 +672,21 @@ let suite =
          >:: test_update_monsters_generator_on_closed_office;
          "Get Monsters at Location" >:: test_get_monsters_at_location;
          "Test No Negative Locations" >:: test_no_negative_locations;
-         "No Movement in Short Time Spans" >:: test_monster_no_movement_short_interval;
-         "Locations Never More Than 5" >:: test_monster_initial_locations_not_above_5;
-         "Number of Monsters Never Exceeds Four" >::  test_monster_count_never_exceeds_four;
+         "No Movement in Short Time Spans"
+         >:: test_monster_no_movement_short_interval;
+         "Locations Never More Than 5"
+         >:: test_monster_initial_locations_not_above_5;
+         "Number of Monsters Never Exceeds Four"
+         >:: test_monster_count_never_exceeds_four;
          "List to String Function" >:: test_list_to_string;
-         "Monsters With Differential Movement and Locations" >:: test_monsters_differential_movement;
-         "Test Monsters with Multiple Generators" >:: test_multiple_generators_impact_pace;
+         "Monsters With Differential Movement and Locations"
+         >:: test_monsters_differential_movement;
+         "Test Monsters with Multiple Generators"
+         >:: test_multiple_generators_impact_pace;
          "Two Consecutive Movements" >:: test_monster_consecutive_movements;
          "Test Game End Condition" >:: test_game_end_condition;
-         "Monster Reaction to Game Hour Change" >:: test_monster_reacts_to_hour_change;
+         "Monster Reaction to Game Hour Change"
+         >:: test_monster_reacts_to_hour_change;
          "Time Freezing" >:: test_game_behavior_when_time_freezes;
          "Test Precision of Simultaneous Movement Time" >:: test_timing_precision_on_monster_moves;
          "Full Night Movement Accuracy" >:: test_full_night_monster_movement_simulation;
