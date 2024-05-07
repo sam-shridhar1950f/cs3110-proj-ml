@@ -88,12 +88,10 @@ let display_ascii_art filename =
   let full_path = "data/" ^ filename ^ ".txt" in
   try
     let ascii_art = read_ascii_art_from_file full_path in
-    print_endline ascii_art;
+    print_endline ascii_art
   with
   | Sys_error msg -> print_endline ("Error loading file: " ^ msg)
   | _ -> print_endline "Failed to display ASCII art."
-
-
 
 let power_consumption_rates state action : int =
   match (state.power_mode, action) with
@@ -192,11 +190,14 @@ let apply_random_power_up state =
   Random.self_init ();
   if Random.bool () then begin
     (* 50% chance to get a beneficial power-up *)
-    state.battery <- min 100 (state.battery + 10);  (* Ensure battery doesn't exceed 100 *)
+    state.battery <- min 100 (state.battery + 10);
+    (* Ensure battery doesn't exceed 100 *)
     print_endline "Mystery power-up activated: +10 battery power!"
-  end else begin
+  end
+  else begin
     (* 50% chance to get a detrimental effect *)
-    state.battery <- max 0 (state.battery - 10);  (* Ensure battery doesn't go below 0 *)
+    state.battery <- max 0 (state.battery - 10);
+    (* Ensure battery doesn't go below 0 *)
     print_endline "Mystery debuff activated: -10 battery power!"
   end
 
@@ -315,8 +316,9 @@ let process_command state command =
       | Failure _ -> print_endline "Invalid camera number."
       | Not_found -> print_endline "Camera not found.")
   | "map" -> print_map ()
-  | name when List.exists (fun monster -> get_name monster = name) state.monsters ->
-    display_ascii_art name
+  | name
+    when List.exists (fun monster -> get_name monster = name) state.monsters ->
+      display_ascii_art name
   | _ -> print_endline "Invalid command"
 
 let list_to_string lst =
@@ -339,7 +341,8 @@ let rec game_loop state =
     if current_hour <> state.last_announced_hour then begin
       if current_hour < List.length hourly_messages then
         print_endline (List.nth hourly_messages current_hour);
-      apply_random_power_up state;  (* Apply a power-up or debuff each hour *)
+      apply_random_power_up state;
+      (* Apply a power-up or debuff each hour *)
       state.last_announced_hour <- current_hour
       (* Update the last announced hour *)
     end;
@@ -387,5 +390,3 @@ let rec start_or_tutorial () =
       print_map ();
       game_loop state
   | _ -> start_or_tutorial ()
-
-
