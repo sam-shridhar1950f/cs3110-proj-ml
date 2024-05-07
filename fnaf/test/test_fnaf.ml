@@ -426,6 +426,23 @@ let test_list_to_string _ =
   let single = list_to_string ["Hello"] in
   assert_equal "Hello" single ~msg:"Should handle single element list"
     
+let test_monsters_differential_movement _ =
+  let monster1 = create_monster "Foxy" 5 0.0 in
+  let monster2 = create_monster "Bonnie" 1 0.0 in
+  ignore (move_monster monster1 15.0 Normal false false);
+  ignore (move_monster monster2 15.0 Normal false false);
+  assert_bool "Monsters at different initial locations should move differently"
+    (get_location monster1 <> get_location monster2)
+
+let test_multiple_generators_impact_pace _ =
+  let monster = create_monster "Bonnie" 2 0.0 in
+  let pace_initial = get_pace Hard monster false in
+  let pace_with_generator = get_pace Hard monster true in
+  let pace_after_double_toggle = get_pace Hard monster false in
+  assert_equal pace_initial pace_after_double_toggle;
+  assert_bool "Pace with generator should be less" (pace_with_generator < pace_initial)
+
+
 
 
 (* Varying times and generator states should result in varied locations *)
@@ -546,6 +563,8 @@ let suite =
          "Locations Never More Than 5" >:: test_monster_initial_locations_not_above_5;
          "Number of Monsters Never Exceeds Four" >::  test_monster_count_never_exceeds_four;
          "List to String Function" >:: test_list_to_string;
+         "Monsters With Differential Movement and Locations" >:: test_monsters_differential_movement;
+         "Test Monsters with Multiple Generators" >:: test_multiple_generators_impact_pace;
          QCheck_ounit.to_ounit2_test
            prop_monster_never_moves_to_negative_location;
          QCheck_ounit.to_ounit2_test prop_monster_resets_if_door_closed;

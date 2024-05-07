@@ -67,6 +67,34 @@ let initial_state difficulty =
     (* Initialize to -1 so it will definitely update on the first hour *)
   }
 
+let read_ascii_art_from_file filename =
+  let input_channel = open_in filename in
+  let rec read_lines accum =
+    try
+      let line = input_line input_channel in
+      read_lines (accum ^ line ^ "\n")
+    with End_of_file -> accum
+  in
+  try
+    let art = read_lines "" in
+    close_in input_channel;
+    art
+  with e ->
+    close_in_noerr input_channel;
+    (* Ensure the file is closed even if an error occurs *)
+    raise e (* Re-raise the exception after handling it *)
+
+let display_ascii_art filename =
+  let full_path = "data/" ^ filename ^ ".txt" in
+  try
+    let ascii_art = read_ascii_art_from_file full_path in
+    print_endline ascii_art;
+  with
+  | Sys_error msg -> print_endline ("Error loading file: " ^ msg)
+  | _ -> print_endline "Failed to display ASCII art."
+
+
+
 let power_consumption_rates state action : int =
   match (state.power_mode, action) with
   | Normal, "door" -> 5
@@ -159,6 +187,18 @@ let print_map () =
   in
   Array.iter print_endline map_lines;
   print_newline ()
+
+let apply_random_power_up state =
+  Random.self_init ();
+  if Random.bool () then begin
+    (* 50% chance to get a beneficial power-up *)
+    state.battery <- min 100 (state.battery + 10);  (* Ensure battery doesn't exceed 100 *)
+    print_endline "Mystery power-up activated: +10 battery power!"
+  end else begin
+    (* 50% chance to get a detrimental effect *)
+    state.battery <- max 0 (state.battery - 10);  (* Ensure battery doesn't go below 0 *)
+    print_endline "Mystery debuff activated: -10 battery power!"
+  end
 
 let random_hazard state =
   if Random.float 1.0 < 0.05 then
@@ -275,6 +315,8 @@ let process_command state command =
       | Failure _ -> print_endline "Invalid camera number."
       | Not_found -> print_endline "Camera not found.")
   | "map" -> print_map ()
+  | name when List.exists (fun monster -> get_name monster = name) state.monsters ->
+    display_ascii_art name
   | _ -> print_endline "Invalid command"
 
 let list_to_string lst =
@@ -297,6 +339,7 @@ let rec game_loop state =
     if current_hour <> state.last_announced_hour then begin
       if current_hour < List.length hourly_messages then
         print_endline (List.nth hourly_messages current_hour);
+      apply_random_power_up state;  (* Apply a power-up or debuff each hour *)
       state.last_announced_hour <- current_hour
       (* Update the last announced hour *)
     end;
@@ -345,19 +388,4 @@ let rec start_or_tutorial () =
       game_loop state
   | _ -> start_or_tutorial ()
 
-let read_ascii_art_from_file filename =
-  let input_channel = open_in filename in
-  let rec read_lines accum =
-    try
-      let line = input_line input_channel in
-      read_lines (accum ^ line ^ "\n")
-    with End_of_file -> accum
-  in
-  try
-    let art = read_lines "" in
-    close_in input_channel;
-    art
-  with e ->
-    close_in_noerr input_channel;
-    (* Ensure the file is closed even if an error occurs *)
-    raise e (* Re-raise the exception after handling it *)
+
