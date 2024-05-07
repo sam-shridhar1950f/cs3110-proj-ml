@@ -520,7 +520,6 @@ let test_full_night_monster_movement_simulation _ =
     (* Simulate movements from 1 AM to 6 AM *)
     simulate_hourly_movements hour
   done;
-<<<<<<< HEAD
   List.iter (fun m ->  (* Assert that no monster ends at the start location *)
     assert_bool "No monster should be at the initial position at the end of the night" 
       (get_location m <> 5)
@@ -548,15 +547,6 @@ let test_monsters_locations_overlap _ =
     (List.length overlaps > 0)
 
 
-=======
-  List.iter
-    (fun m ->
-      (* Assert that no monster ends at the start location *)
-      assert_bool
-        "No monster should be at the initial position at the end of the night"
-        (get_location m <> 5))
-    monsters
->>>>>>> 39897366507d9a356207ed96ed91d7c93b668ed4
 
 (* Varying times and generator states should result in varied locations *)
 
