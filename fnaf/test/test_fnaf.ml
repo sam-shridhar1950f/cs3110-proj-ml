@@ -511,6 +511,27 @@ let test_full_night_monster_movement_simulation _ =
   ) monsters
 
 
+let test_monsters_locations_overlap _ =
+  let monsters = [
+    create_monster "Chica" 3 0.0;  (* Starting closer to the critical point *)
+    create_monster "Bonnie" 4 0.0;  (* Starting one step farther than Chica *)
+    create_monster "Freddy" 4 0.0;  (* Same start as Bonnie *)
+    create_monster "Foxy" 5 0.0;    (* Farthest start point *)
+  ] in
+  (* Move all monsters with enough time to ensure they reach the same location *)
+  List.iter (fun monster ->
+    ignore (move_monster monster 60.0 Normal false false)
+  ) monsters;
+  let location_counts = List.fold_left (fun acc monster ->
+    let loc = get_location monster in
+    let count = try List.assoc loc acc with Not_found -> 0 in
+    (loc, count + 1) :: List.remove_assoc loc acc
+  ) [] monsters in
+  let overlaps = List.filter (fun (_, count) -> count > 1) location_counts in
+  assert_bool "There should be at least one location with overlapping monsters"
+    (List.length overlaps > 0)
+
+
 
 (* Varying times and generator states should result in varied locations *)
 
@@ -638,6 +659,7 @@ let suite =
          "Time Freezing" >:: test_game_behavior_when_time_freezes;
          "Test Precision of Simultaneous Movement Time" >:: test_timing_precision_on_monster_moves;
          "Full Night Movement Accuracy" >:: test_full_night_monster_movement_simulation;
+         "Overlap in Monsters" >:: test_monsters_locations_overlap;
          QCheck_ounit.to_ounit2_test
            prop_monster_never_moves_to_negative_location;
          QCheck_ounit.to_ounit2_test prop_monster_resets_if_door_closed;
