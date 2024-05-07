@@ -442,6 +442,73 @@ let test_multiple_generators_impact_pace _ =
   assert_equal pace_initial pace_after_double_toggle;
   assert_bool "Pace with generator should be less" (pace_with_generator < pace_initial)
 
+let test_monster_consecutive_movements _ =
+  let monster = create_monster "Chica" 5 0.0 in
+  ignore (move_monster monster 30.0 Normal false false);  (* First move *)
+  let location_after_first_move = get_location monster in
+  ignore (move_monster monster 60.0 Normal false false);  (* Second move *)
+  let location_after_second_move = get_location monster in
+  assert (location_after_second_move < location_after_first_move)
+
+
+let test_game_end_condition _ =
+  let monsters = [
+    create_monster "Freddy" 0 0.0;
+    create_monster "Bonnie" 0 0.0;
+    create_monster "Chica" 0 0.0;
+    create_monster "Foxy" 0 0.0
+  ] in
+  let (game_over, _) = update_monsters monsters 30.0 Normal false false in
+  assert_bool "Game should end when all monsters converge at location 0" game_over
+
+let test_monster_reacts_to_hour_change _ =
+  let monster = create_monster "Bonnie" 5 0.0 in
+  (* Simulate game time passing to just before an hour transition *)
+  ignore (move_monster monster 0. Normal false false);
+  let location_before_hour_change = get_location monster in
+  (* Simulate crossing the hour threshold *)
+  ignore (move_monster monster 3601.0 Normal false false);
+  let location_after_hour_change = get_location monster in
+  assert_bool "Monster should move more aggressively after an hour change"
+    (location_after_hour_change < location_before_hour_change)
+
+    
+let test_game_behavior_when_time_freezes _ =
+  let initial_time = Unix.gettimeofday () in
+  let monster = create_monster "Foxy" 5 initial_time in
+  Unix.sleep 2;  (* Simulate game pausing for 2 seconds, no game time should pass *)
+  ignore (move_monster monster initial_time Normal false false);  (* Move monster at the same initial time *)
+  assert_equal ~msg:"Monster should not move when game time is frozen" 5 (get_location monster)
+
+let test_timing_precision_on_monster_moves _ =
+  let monster = create_monster "Bonnie" 5 0.0 in
+  ignore (move_monster monster 15.0 Normal false false);  (* Monster moves after 15 seconds *)
+  assert_equal ~msg:"Monster should not move too soon" 5 (get_location monster);
+  ignore (move_monster monster 30.0 Normal false false);  (* Now it should move *)
+  assert_bool "Monster should have moved" (get_location monster < 5)
+
+
+let test_full_night_monster_movement_simulation _ =
+  let monsters = init_monsters in
+  let simulate_hourly_movements hour =
+    List.iter (fun m ->
+      let time = float_of_int (hour * 3600) in  (* Convert hours to seconds *)
+      let difficulty = if hour < 3 then Normal else Hard in
+      let door_status = hour mod 2 = 0 in  (* Alternate door status every hour *)
+      ignore (move_monster m time difficulty door_status false);
+    ) monsters;
+    List.iter (fun m ->
+      assert_bool "Monsters should not move into the room when door is closed" 
+        ((get_location m > 0) || not (hour mod 2 = 0))
+    ) monsters
+  in
+  for hour = 1 to 6 do  (* Simulate movements from 1 AM to 6 AM *)
+    simulate_hourly_movements hour
+  done;
+  List.iter (fun m ->  (* Assert that no monster ends at the start location *)
+    assert_bool "No monster should be at the initial position at the end of the night" 
+      (get_location m <> 5)
+  ) monsters
 
 
 
@@ -565,6 +632,12 @@ let suite =
          "List to String Function" >:: test_list_to_string;
          "Monsters With Differential Movement and Locations" >:: test_monsters_differential_movement;
          "Test Monsters with Multiple Generators" >:: test_multiple_generators_impact_pace;
+         "Two Consecutive Movements" >:: test_monster_consecutive_movements;
+         "Test Game End Condition" >:: test_game_end_condition;
+         "Monster Reaction to Game Hour Change" >:: test_monster_reacts_to_hour_change;
+         "Time Freezing" >:: test_game_behavior_when_time_freezes;
+         "Test Precision of Simultaneous Movement Time" >:: test_timing_precision_on_monster_moves;
+         "Full Night Movement Accuracy" >:: test_full_night_monster_movement_simulation;
          QCheck_ounit.to_ounit2_test
            prop_monster_never_moves_to_negative_location;
          QCheck_ounit.to_ounit2_test prop_monster_resets_if_door_closed;

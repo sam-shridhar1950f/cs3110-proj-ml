@@ -1,4 +1,3 @@
-
 type monster = {
   name : string;
   mutable location : int;

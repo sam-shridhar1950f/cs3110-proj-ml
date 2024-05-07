@@ -11,7 +11,7 @@ type difficulty =
 val init_monsters : monster list
 (** [init_monsters] is a list of four monsters starting at location 5. *)
 
-val create_monster : string -> int -> float -> monster
+val create_monster : string -> int -> float  -> monster
 (** [make_monster name loc time] is a monster with name [name], starting
 location [loc], and last move time [time]. *)
 
