@@ -24,20 +24,20 @@ val get_location : monster -> int
 val get_time : monster -> float
 (** [get_time mon] is the last move time of monster [mon] *)
 
-val get_pace : difficulty -> monster -> bool -> float
-(** [get_pace diff name generator_on] is how long it takes monster [name] with 
-game difficulty [diff] to move to the next room given generate state 
+val get_pace : difficulty -> monster -> bool -> bool -> float
+(** [get_pace diff name generator_on enraged] is how long it takes monster 
+[name] with game difficulty [diff] to move to the next room given generate state 
 [generator_on]. *)
 
-val move_monster : monster -> float -> difficulty -> bool -> bool -> bool
-(** [move_monster mon time diff door_closed generator_on] modifies the monster 
+val move_monster : monster -> float -> difficulty -> bool -> bool -> bool -> bool
+(** [move_monster mon time diff door_closed generator_on enraged] modifies the monster 
 [mon] to reflect the next state of the monster at time [time] and with game 
 difficulty [diff] and with door state [door_closed] and with generator state 
 [generator_on] and returns true if monster successfully reaches the office; 
 otherwise false. *)
 
-val update_monsters : monster list -> float -> difficulty -> bool -> bool -> bool * string list
-(** [update_monsters monsters time diff door_closed gen_on] updates the monster 
+val update_monsters : monster list -> float -> difficulty -> bool -> bool -> bool -> bool * string list
+(** [update_monsters monsters time diff door_closed gen_on enraged] updates the monster 
 locations under conditions time [time], difficulty [difficulty], door state 
 [door_closed], and generator state [gen_on] and returns a boolean indicating if 
 any monsters successfully reach the office and the list of monster names that 

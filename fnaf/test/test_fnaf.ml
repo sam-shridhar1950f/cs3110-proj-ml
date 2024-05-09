@@ -13,13 +13,14 @@ let setup_monsters initial_location initial_time =
     create_monster "Freddy Fazbear" initial_location initial_time;
   ]
 
-let advance_time monsters time_diff difficulty door_closed generator_on =
+let advance_time monsters time_diff difficulty door_closed generator_on enraged
+    =
   List.iter
     (fun monster ->
       ignore
         (move_monster monster
            (get_time monster +. time_diff)
-           difficulty door_closed generator_on))
+           difficulty door_closed generator_on enraged))
     monsters
 
 let assert_location monsters expected_locations =
@@ -86,19 +87,19 @@ let test_initial_positions _ =
 (* Test movement logic with generator off *)
 let test_movement_without_generator _ =
   let monsters = setup_monsters 5 0.0 in
-  advance_time monsters 30. Normal false false;
+  advance_time monsters 30. Normal false false false;
   assert_location monsters [ 4; 4; 4; 4 ]
 
 (* Test movement logic with generator on reduces pace *)
 let test_movement_with_generator _ =
   let monsters = setup_monsters 5 0.0 in
-  advance_time monsters 56. Normal false true;
+  advance_time monsters 56. Normal false true false;
   assert_location monsters [ 4; 4; 4; 4 ]
 
 (* Test monsters reset location when door is closed at location 0 *)
 let test_reset_when_door_closed _ =
   let monsters = setup_monsters 0 0.0 in
-  advance_time monsters 60. Normal true false;
+  advance_time monsters 60. Normal true false false;
   List.iter
     (fun m ->
       assert_bool "Monsters should reset to a new location" (get_location m > 0))
@@ -114,25 +115,25 @@ let test_pace_change_with_difficulty _ =
 (* Test non-movement when the game starts (time = 0) *)
 let test_no_movement_at_start _ =
   let monsters = setup_monsters 5 0.0 in
-  advance_time monsters 0. Easy false false;
+  advance_time monsters 0. Easy false false false;
   assert_location monsters [ 5; 5; 5; 5 ]
 
 (* Test negative time does not cause errors or movement *)
 let test_negative_time _ =
   let monsters = setup_monsters 5 0.0 in
-  advance_time monsters (-10.) Easy false false;
+  advance_time monsters (-10.) Easy false false false;
   assert_location monsters [ 5; 5; 5; 5 ]
 
 (* Test maximum integer time advancement *)
 let test_max_int_time _ =
   let monsters = setup_monsters 5 0.0 in
-  advance_time monsters (float_of_int max_int) Easy false false;
+  advance_time monsters (float_of_int max_int) Easy false false false;
   assert_location monsters [ 4; 4; 4; 4 ]
 
 (* Test minimum integer time regression *)
 let test_min_int_time _ =
   let monsters = setup_monsters 5 0.0 in
-  advance_time monsters (-.float_of_int max_int) Easy false false;
+  advance_time monsters (-.float_of_int max_int) Easy false false false;
   assert_location monsters [ 5; 5; 5; 5 ]
 
 (* Test random resets within game bounds *)
@@ -140,7 +141,7 @@ let test_random_resets_within_bounds _ =
   Random.self_init ();
   let monsters = setup_monsters 5 0.0 in
   for _ = 1 to 10 do
-    advance_time monsters (Random.float 50.) Hard true true
+    advance_time monsters (Random.float 50.) Hard true true false
   done;
   List.iter
     (fun m ->
@@ -150,7 +151,8 @@ let test_random_resets_within_bounds _ =
 
 let test_extreme_time_advancement _ =
   let monsters = setup_monsters 5 0.0 in
-  advance_time monsters 31536000.0 (* 1 year in seconds *) Easy false false;
+  advance_time monsters 31536000.0 (* 1 year in seconds *) Easy false false
+    false;
   assert_location monsters [ 4; 4; 4; 4 ]
 (* Expected locations after handling extreme time advancement *)
 
@@ -165,9 +167,9 @@ let test_invalid_time_and_location _ =
 let test_consecutive_door_closures _ =
   let monsters = setup_monsters 1 0.0 in
   for _ = 1 to 5 do
-    advance_time monsters 1. Hard true false;
+    advance_time monsters 1. Hard true false false;
     (* Door closed *)
-    advance_time monsters 1. Hard false false (* Door opened *)
+    advance_time monsters 1. Hard false false false (* Door opened *)
   done;
   assert_location monsters [ 1; 1; 1; 1 ]
 (* Check for expected behavior after consecutive door actions *)
@@ -175,17 +177,17 @@ let test_consecutive_door_closures _ =
 let test_consistency_across_runs _ =
   let first_run = setup_monsters 5 0.0 in
   let second_run = setup_monsters 5 0.0 in
-  advance_time first_run 10. Normal false false;
-  advance_time second_run 10. Normal false false;
+  advance_time first_run 10. Normal false false false;
+  advance_time second_run 10. Normal false false false;
   assert_equal
     ~printer:(fun lst -> String.concat "; " (List.map string_of_int lst))
     (get_locations first_run) (get_locations second_run)
 
 let test_extreme_pacing_changes _ =
   let monsters = setup_monsters 5 0.0 in
-  advance_time monsters 5. Easy false false;
-  advance_time monsters 5. Hard false false;
-  advance_time monsters 5. Easy false false;
+  advance_time monsters 5. Easy false false false;
+  advance_time monsters 5. Hard false false false;
+  advance_time monsters 5. Easy false false false;
   assert_location monsters [ 5; 5; 5; 5 ]
 
 (* Test rapid sequence of door state changes *)
@@ -193,7 +195,7 @@ let test_rapid_door_state_changes _ =
   let monsters = setup_monsters 5 0.0 in
   for _ = 1 to 10 do
     let door_state = Random.bool () in
-    advance_time monsters 5. Normal door_state false
+    advance_time monsters 5. Normal door_state false false
   done;
   List.iter
     (fun m ->
@@ -207,7 +209,7 @@ let test_large_number_of_cycles _ =
   let monsters = setup_monsters 5 0.0 in
   for i = 1 to 100 do
     let gen_state = Random.bool () in
-    advance_time monsters (float_of_int i) Hard false gen_state
+    advance_time monsters (float_of_int i) Hard false gen_state false
   done;
   List.iter
     (fun m ->
@@ -219,7 +221,7 @@ let test_large_number_of_cycles _ =
 let test_location_bounds_at_maximum _ =
   let monsters = setup_monsters max_int 0.0 in
   for _ = 1 to 5 do
-    advance_time monsters 10. Easy false false
+    advance_time monsters 10. Easy false false false
   done;
   List.iter
     (fun m ->
@@ -230,14 +232,14 @@ let test_location_bounds_at_maximum _ =
 (* Test door interaction during critical monster movements *)
 let test_critical_door_interactions _ =
   let monsters = setup_monsters 1 0.0 in
-  advance_time monsters 1. Hard true false;
+  advance_time monsters 1. Hard true false false;
   assert_location monsters [ 1; 1; 1; 1 ]
 (* Assuming monsters try to move to location 0 but door is closed *)
 
 (* Test monster movement synchronization under uniform conditions *)
 let test_movement_synchronization _ =
   let monsters = setup_monsters 5 0.0 in
-  advance_time monsters 30. Hard false true;
+  advance_time monsters 30. Hard false true false;
   assert_location monsters [ 4; 4; 4; 4 ]
 
 (* Test each monster's independent reaction to generator on/off state *)
@@ -245,7 +247,11 @@ let test_individual_generator_effects _ =
   let monsters = setup_monsters 5 0.0 in
   List.iteri
     (fun i m ->
-      advance_time [ m ] (10. *. float_of_int (i + 1)) Hard false (i mod 2 = 0))
+      advance_time [ m ]
+        (10. *. float_of_int (i + 1))
+        Hard false
+        (i mod 2 = 0)
+        false)
     monsters;
   assert_location monsters [ 5; 4; 4; 4 ]
 
@@ -258,14 +264,14 @@ let test_difficulty_impact _ =
 let test_monster_name_consistency _ =
   let monsters = init_monsters in
   let names_before = List.map get_name monsters in
-  advance_time monsters 60. Normal false false;
+  advance_time monsters 60. Normal false false false;
   let names_after = List.map get_name monsters in
   assert_equal ~printer:(String.concat ", ") names_before names_after
     ~msg:"Monster names should remain consistent after state changes"
 
 let test_timing_precision _ =
   let monsters = setup_monsters 5 0.0 in
-  List.iter (fun m -> advance_time [ m ] 0.1 Hard false false) monsters;
+  List.iter (fun m -> advance_time [ m ] 0.1 Hard false false false) monsters;
   List.iter
     (fun m ->
       assert_bool "Timing updates should be precise to the second"
@@ -275,7 +281,7 @@ let test_timing_precision _ =
 let test_door_blockage_logic _ =
   let monsters = setup_monsters 1 0.0 in
   for _ = 1 to 10 do
-    advance_time monsters 1. Normal true false
+    advance_time monsters 1. Normal true false false
     (* Door repeatedly closes as monsters approach *)
   done;
   List.iter
@@ -290,7 +296,7 @@ let test_game_stability_under_extreme_load _ =
   let rec simulate_actions monsters count =
     if count = 0 then true
     else begin
-      advance_time monsters 0.5 Hard false false;
+      advance_time monsters 0.5 Hard false false false;
       simulate_actions monsters (count - 1)
     end
   in
@@ -299,7 +305,7 @@ let test_game_stability_under_extreme_load _ =
 
 let test_door_closure_effectiveness _ =
   let monsters = setup_monsters 1 0.0 in
-  advance_time monsters 5. Hard true false;
+  advance_time monsters 5. Hard true false false;
   (* Door is closed as monsters approach location 0 *)
   List.iter
     (fun m ->
@@ -324,8 +330,8 @@ let test_individual_monster_creation _ =
 let test_monster_movement_at_boundary_conditions _ =
   let monster_at_min = create_monster "EdgeCaseMin" 0 0.0 in
   let monster_at_max = create_monster "EdgeCaseMax" 5 0.0 in
-  let _ = move_monster monster_at_min 10.0 Normal false false in
-  let _ = move_monster monster_at_max 10.0 Normal false false in
+  let _ = move_monster monster_at_min 10.0 Normal false false false in
+  let _ = move_monster monster_at_max 10.0 Normal false false false in
   assert_equal 0 (get_location monster_at_min);
   (* Expect no movement beyond lower boundary *)
   assert_equal 5 (get_location monster_at_max)
@@ -333,57 +339,57 @@ let test_monster_movement_at_boundary_conditions _ =
 
 let test_update_monsters _ =
   let monsters = setup_monsters 5 0.0 in
-  let update = update_monsters monsters 22. Normal true false in
+  let update = update_monsters monsters 22. Normal true false false in
   assert_equal (false, []) update;
   assert_location monsters [ 4; 4; 5; 5 ]
 
 let test_update_monsters_long _ =
   let monsters = setup_monsters 5 0.0 in
-  let update = update_monsters monsters 62. Normal true false in
+  let update = update_monsters monsters 62. Normal true false false in
   assert_equal (false, []) update;
   assert_location monsters [ 4; 4; 4; 4 ]
 
 let test_update_monsters_open_office _ =
   let monsters = setup_monsters 1 0.0 in
-  let update = update_monsters monsters 22. Normal false false in
+  let update = update_monsters monsters 22. Normal false false false in
   assert_equal (true, [ "Chica"; "Foxy" ]) update;
   assert_location monsters [ 0; 0; 1; 1 ]
 
 let test_update_monsters_closed_office _ =
   let monsters = setup_monsters 1 0.0 in
-  let update = update_monsters monsters 22. Normal true false in
+  let update = update_monsters monsters 22. Normal true false false in
   assert_equal (false, []) update
 
 let test_update_monsters_generator_on _ =
   let monsters = setup_monsters 2 0.0 in
-  let update = update_monsters monsters 12. Normal true true in
+  let update = update_monsters monsters 12. Normal true true false in
   assert_equal (false, []) update;
   assert_location monsters [ 1; 1; 2; 2 ]
 
 let test_update_monsters_generator_on_open_office _ =
   let monsters = setup_monsters 1 0.0 in
-  let update = update_monsters monsters 8. Normal false true in
+  let update = update_monsters monsters 8. Normal false true false in
   assert_equal (true, [ "Foxy" ]) update;
   assert_location monsters [ 1; 0; 1; 1 ]
 
 let test_update_monsters_generator_on_closed_office _ =
   let monsters = setup_monsters 1 0.0 in
-  let update = update_monsters monsters 12. Normal true true in
+  let update = update_monsters monsters 12. Normal true true false in
   assert_equal (false, []) update
 
 let test_get_monsters_at_location _ =
   let monsters = setup_monsters 5 0.0 in
-  let _ = update_monsters monsters 22. Normal true false in
+  let _ = update_monsters monsters 22. Normal true false false in
   assert_equal [ "Chica"; "Foxy" ] (get_monsters_at_location monsters 4);
   assert_equal
     [ "Bonnie"; "Freddy Fazbear" ]
     (get_monsters_at_location monsters 5);
-  let _ = update_monsters monsters 27. Normal true false in
+  let _ = update_monsters monsters 27. Normal true false false in
   assert_equal
     [ "Chica"; "Foxy"; "Bonnie" ]
     (get_monsters_at_location monsters 4);
   assert_equal [ "Freddy Fazbear" ] (get_monsters_at_location monsters 5);
-  let _ = update_monsters monsters 38. Normal true false in
+  let _ = update_monsters monsters 38. Normal true false false in
   assert_equal [ "Foxy" ] (get_monsters_at_location monsters 3);
   assert_equal
     [ "Chica"; "Bonnie"; "Freddy Fazbear" ]
@@ -391,7 +397,7 @@ let test_get_monsters_at_location _ =
 
 let test_no_negative_locations _ =
   let monsters = setup_monsters 1 0.0 in
-  advance_time monsters (-10.0) Normal false false;
+  advance_time monsters (-10.0) Normal false false false;
   List.iter
     (fun m ->
       assert_bool "Monsters should not have negative locations"
@@ -400,7 +406,7 @@ let test_no_negative_locations _ =
 
 let test_monster_no_movement_short_interval _ =
   let monster = create_monster "Freddy Fazbear" 5 0.0 in
-  ignore (move_monster monster 5.0 Normal false false);
+  ignore (move_monster monster 5.0 Normal false false false);
   (* Assuming pace > 5.0 *)
   assert_equal 5 (get_location monster)
 
@@ -431,8 +437,8 @@ let test_list_to_string _ =
 let test_monsters_differential_movement _ =
   let monster1 = create_monster "Foxy" 5 0.0 in
   let monster2 = create_monster "Bonnie" 1 0.0 in
-  ignore (move_monster monster1 15.0 Normal false false);
-  ignore (move_monster monster2 15.0 Normal false false);
+  ignore (move_monster monster1 15.0 Normal false false false);
+  ignore (move_monster monster2 15.0 Normal false false false);
   assert_bool "Monsters at different initial locations should move differently"
     (get_location monster1 <> get_location monster2)
 
@@ -447,10 +453,10 @@ let test_multiple_generators_impact_pace _ =
 
 let test_monster_consecutive_movements _ =
   let monster = create_monster "Chica" 5 0.0 in
-  ignore (move_monster monster 30.0 Normal false false);
+  ignore (move_monster monster 30.0 Normal false false false);
   (* First move *)
   let location_after_first_move = get_location monster in
-  ignore (move_monster monster 60.0 Normal false false);
+  ignore (move_monster monster 60.0 Normal false false false);
   (* Second move *)
   let location_after_second_move = get_location monster in
   assert (location_after_second_move < location_after_first_move)
@@ -464,17 +470,17 @@ let test_game_end_condition _ =
       create_monster "Foxy" 0 0.0;
     ]
   in
-  let game_over, _ = update_monsters monsters 30.0 Normal false false in
+  let game_over, _ = update_monsters monsters 30.0 Normal false false false in
   assert_bool "Game should end when all monsters converge at location 0"
     game_over
 
 let test_monster_reacts_to_hour_change _ =
   let monster = create_monster "Bonnie" 5 0.0 in
   (* Simulate game time passing to just before an hour transition *)
-  ignore (move_monster monster 0. Normal false false);
+  ignore (move_monster monster 0. Normal false false false);
   let location_before_hour_change = get_location monster in
   (* Simulate crossing the hour threshold *)
-  ignore (move_monster monster 3601.0 Normal false false);
+  ignore (move_monster monster 3601.0 Normal false false false);
   let location_after_hour_change = get_location monster in
   assert_bool "Monster should move more aggressively after an hour change"
     (location_after_hour_change < location_before_hour_change)
@@ -484,17 +490,17 @@ let test_game_behavior_when_time_freezes _ =
   let monster = create_monster "Foxy" 5 initial_time in
   Unix.sleep 2;
   (* Simulate game pausing for 2 seconds, no game time should pass *)
-  ignore (move_monster monster initial_time Normal false false);
+  ignore (move_monster monster initial_time Normal false false false);
   (* Move monster at the same initial time *)
   assert_equal ~msg:"Monster should not move when game time is frozen" 5
     (get_location monster)
 
 let test_timing_precision_on_monster_moves _ =
   let monster = create_monster "Bonnie" 5 0.0 in
-  ignore (move_monster monster 15.0 Normal false false);
+  ignore (move_monster monster 15.0 Normal false false false);
   (* Monster moves after 15 seconds *)
   assert_equal ~msg:"Monster should not move too soon" 5 (get_location monster);
-  ignore (move_monster monster 30.0 Normal false false);
+  ignore (move_monster monster 30.0 Normal false false false);
   (* Now it should move *)
   assert_bool "Monster should have moved" (get_location monster < 5)
 
@@ -508,7 +514,7 @@ let test_full_night_monster_movement_simulation _ =
         let difficulty = if hour < 3 then Normal else Hard in
         let door_status = hour mod 2 = 0 in
         (* Alternate door status every hour *)
-        ignore (move_monster m time difficulty door_status false))
+        ignore (move_monster m time difficulty door_status false false))
       monsters;
     List.iter
       (fun m ->
@@ -520,33 +526,43 @@ let test_full_night_monster_movement_simulation _ =
     (* Simulate movements from 1 AM to 6 AM *)
     simulate_hourly_movements hour
   done;
-  List.iter (fun m ->  (* Assert that no monster ends at the start location *)
-    assert_bool "No monster should be at the initial position at the end of the night" 
-      (get_location m <> 5)
-  ) monsters
-
+  List.iter
+    (fun m ->
+      (* Assert that no monster ends at the start location *)
+      assert_bool
+        "No monster should be at the initial position at the end of the night"
+        (get_location m <> 5))
+    monsters
 
 let test_monsters_locations_overlap _ =
-  let monsters = [
-    create_monster "Chica" 3 0.0;  (* Starting closer to the critical point *)
-    create_monster "Bonnie" 4 0.0;  (* Starting one step farther than Chica *)
-    create_monster "Freddy" 4 0.0;  (* Same start as Bonnie *)
-    create_monster "Foxy" 5 0.0;    (* Farthest start point *)
-  ] in
-  (* Move all monsters with enough time to ensure they reach the same location *)
-  List.iter (fun monster ->
-    ignore (move_monster monster 60.0 Normal false false)
-  ) monsters;
-  let location_counts = List.fold_left (fun acc monster ->
-    let loc = get_location monster in
-    let count = try List.assoc loc acc with Not_found -> 0 in
-    (loc, count + 1) :: List.remove_assoc loc acc
-  ) [] monsters in
+  let monsters =
+    [
+      create_monster "Chica" 3 0.0;
+      (* Starting closer to the critical point *)
+      create_monster "Bonnie" 4 0.0;
+      (* Starting one step farther than Chica *)
+      create_monster "Freddy" 4 0.0;
+      (* Same start as Bonnie *)
+      create_monster "Foxy" 5 0.0;
+      (* Farthest start point *)
+    ]
+  in
+  (* Move all monsters with enough time to ensure they reach the same
+     location *)
+  List.iter
+    (fun monster -> ignore (move_monster monster 60.0 Normal false false false))
+    monsters;
+  let location_counts =
+    List.fold_left
+      (fun acc monster ->
+        let loc = get_location monster in
+        let count = try List.assoc loc acc with Not_found -> 0 in
+        (loc, count + 1) :: List.remove_assoc loc acc)
+      [] monsters
+  in
   let overlaps = List.filter (fun (_, count) -> count > 1) location_counts in
   assert_bool "There should be at least one location with overlapping monsters"
     (List.length overlaps > 0)
-
-
 
 (* Varying times and generator states should result in varied locations *)
 
@@ -569,7 +585,7 @@ let prop_monster_resets_if_door_closed =
   Test.make ~count:1000 ~name:"prop_monster_resets_if_door_closed"
     (make gen_monster) (fun monster ->
       let monster' = create_monster (get_name monster) 0 (get_time monster) in
-      let result = move_monster monster' 30.0 Hard true true in
+      let result = move_monster monster' 30.0 Hard true true false in
       get_location monster' > 0 || not result)
 
 (* Property: Generator being on should decrease the pace *)
@@ -595,7 +611,7 @@ let prop_consistent_movement =
             ignore
               (move_monster m
                  (time +. get_time m)
-                 difficulty door_closed generator_on);
+                 difficulty door_closed generator_on false);
             let has_moved =
               get_location m != original_location || original_location == 0
             in
@@ -678,8 +694,10 @@ let suite =
          "Monster Reaction to Game Hour Change"
          >:: test_monster_reacts_to_hour_change;
          "Time Freezing" >:: test_game_behavior_when_time_freezes;
-         "Test Precision of Simultaneous Movement Time" >:: test_timing_precision_on_monster_moves;
-         "Full Night Movement Accuracy" >:: test_full_night_monster_movement_simulation;
+         "Test Precision of Simultaneous Movement Time"
+         >:: test_timing_precision_on_monster_moves;
+         "Full Night Movement Accuracy"
+         >:: test_full_night_monster_movement_simulation;
          "Overlap in Monsters" >:: test_monsters_locations_overlap;
          QCheck_ounit.to_ounit2_test
            prop_monster_never_moves_to_negative_location;

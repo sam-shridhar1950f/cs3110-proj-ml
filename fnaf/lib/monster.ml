@@ -29,7 +29,7 @@ let get_name mon = mon.name
 let get_location mon = mon.location
 let get_time mon = mon.last_move_time
 
-let get_pace difficulty monster generator_on =
+let get_pace difficulty monster generator_on enraged =
   let pace =
     match (difficulty, monster.name) with
     | Tutorial, _ -> 10000000.0
@@ -41,11 +41,16 @@ let get_pace difficulty monster generator_on =
     | Normal, "Freddy Fazbear" | Hard, "Freddy Fazbear" -> 30.0
     | _ -> float_of_int max_int
   in
-  if generator_on && monster.location < 3 then pace -. 10. else pace
+  let generator_effect = generator_on && monster.location < 3 in
+  if generator_effect && enraged then pace -. 15.
+  else if generator_effect then pace -. 10.
+  else if enraged then pace -. 5.
+  else pace
 
-let move_monster monster current_time difficulty door_closed generator_on =
+let move_monster monster current_time difficulty door_closed generator_on
+    enraged =
   Random.self_init ();
-  let pace = get_pace difficulty monster generator_on in
+  let pace = get_pace difficulty monster generator_on enraged in
   let should_move = current_time -. monster.last_move_time >= pace in
   if should_move then (
     let next_location = max 0 (monster.location - 1) in
@@ -56,12 +61,14 @@ let move_monster monster current_time difficulty door_closed generator_on =
     if next_location = 0 && not door_closed then true else false)
   else false
 
-let update_monsters monsters current_time difficulty door_closed gen_on =
+let update_monsters monsters current_time difficulty door_closed gen_on enraged
+    =
   let intruded, intruders =
     List.fold_left
       (fun (game_over, monsters_in_office) monster ->
         let reached_player =
           move_monster monster current_time difficulty door_closed gen_on
+            enraged
         in
         if reached_player then (true, monster.name :: monsters_in_office)
         else (game_over, monsters_in_office))

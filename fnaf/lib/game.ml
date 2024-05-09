@@ -27,6 +27,7 @@ type game_state = {
   mutable generator_on : bool;
   difficulty : difficulty;
   mutable last_announced_hour : int;
+  mutable command_times : float list;
       (* New field to track the last announced hour *)
 }
 
@@ -49,6 +50,18 @@ let time_is_up state = elapsed_time state >= 516.0
 let game_hour state = int_of_float (elapsed_time state /. 86.0)
 (* 86 seconds = Hour *)
 
+let update_command_times state time =
+  state.command_times <- time :: state.command_times
+
+let too_many_commands state time =
+  let ten_seconds_ago = time -. 10.0 in
+  let recent_commands =
+    List.filter (fun time -> time > ten_seconds_ago) state.command_times
+  in
+  state.command_times <- recent_commands;
+  (* shorten command_times list since older times won't ever be used *)
+  List.length recent_commands > 5
+
 let initial_state difficulty =
   {
     battery = 100;
@@ -65,6 +78,7 @@ let initial_state difficulty =
     difficulty;
     last_announced_hour = -1;
     (* Initialize to -1 so it will definitely update on the first hour *)
+    command_times = [];
   }
 
 let read_ascii_art_from_file filename =
@@ -118,9 +132,11 @@ let operate_generator state =
   else print_endline "Battery is already full."
 
 let toggle_generator state =
+  let current_time = elapsed_time state in
   let _ =
     update_monsters state.monsters (elapsed_time state) state.difficulty
       state.door_closed state.generator_on
+      (too_many_commands state current_time)
   in
   if state.generator_on then begin
     state.generator_on <- false;
@@ -152,10 +168,10 @@ let display_random_ascii_art filenames =
   in
   display_file filename
 
-let move_monsters_and_check_game_over state =
+let move_monsters_and_check_game_over state enraged =
   let current_time = elapsed_time state in
   update_monsters state.monsters current_time state.difficulty state.door_closed
-    state.generator_on
+    state.generator_on enraged
 
 let update_camera_statuses state =
   state.camera_statuses <-
@@ -247,6 +263,7 @@ let resolve_hazard state =
   | None -> ()
 
 let process_command state command =
+  let current_time = elapsed_time state in
   match command with
   | "help" ->
       print_endline "List of Available Commands";
@@ -267,6 +284,7 @@ let process_command state command =
         "map - displays a map of the building, including camera numbers and \
          locations."
   | "door" ->
+      update_command_times state current_time;
       if state.door_jammed then
         print_endline "The door is jammed and will not respond!"
       else
@@ -276,6 +294,7 @@ let process_command state command =
         print_endline
           (if state.door_closed then "Door closed." else "Door opened.")
   | "light" ->
+      update_command_times state current_time;
       if state.light_malfunction then
         print_endline "The lights are malfunctioning and will not respond!"
       else
@@ -289,17 +308,25 @@ let process_command state command =
           if monsters_nearby then print_endline "Monster nearby!"
           else print_endline "No monster nearby."
         else print_endline "Light turned off."
-  | "generator" -> operate_generator state
-  | "toggle_generator" -> toggle_generator state
-  | "toggle_power_mode" -> toggle_power_mode state
+  | "generator" ->
+      update_command_times state current_time;
+      operate_generator state
+  | "toggle_generator" ->
+      update_command_times state current_time;
+      toggle_generator state
+  | "toggle_power_mode" ->
+      update_command_times state current_time;
+      toggle_power_mode state
   | cam when String.starts_with cam ~prefix:"camera" -> (
       try
+        update_command_times state current_time;
         let cam_number =
           String.sub cam 6 (String.length cam - 6) |> int_of_string
         in
         let power_cost = power_consumption_rates state "camera" in
         state.battery <- state.battery - power_cost;
         update_camera_statuses state;
+        update_command_times state current_time;
         let monster_names =
           get_monsters_at_location state.monsters cam_number
         in
@@ -333,6 +360,7 @@ let list_to_string lst =
   | items -> aux "" items
 
 let rec game_loop state =
+  let current_time = elapsed_time state in
   let current_hour = game_hour state in
   if time_is_up state then
     print_endline "Time's up. The night is over. You survived!"
@@ -357,7 +385,14 @@ let rec game_loop state =
     process_command state command;
     resolve_hazard state;
     (* Resolve any existing hazards *)
-    let game_over, monster_names = move_monsters_and_check_game_over state in
+    let enraged = too_many_commands state current_time in
+    if enraged then
+      print_endline
+        "You've entered commands too quickly and enraged the monsters!"
+    else ();
+    let game_over, monster_names =
+      move_monsters_and_check_game_over state enraged
+    in
     if game_over then
       Printf.printf "A monster got you! It was %s! Game over.\n"
         (list_to_string monster_names)

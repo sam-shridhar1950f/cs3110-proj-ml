@@ -15,7 +15,13 @@ val time_is_up : game_state -> bool
 
 val game_hour : game_state -> int
 
+val update_command_times: game_state -> float -> unit
+
+val too_many_commands: game_state -> float -> bool
+
 val initial_state : difficulty -> game_state
+
+val read_ascii_art_from_file : string -> string
 
 val power_consumption_rates : game_state -> string -> int
 
@@ -27,11 +33,13 @@ val toggle_generator : game_state -> unit
 
 val display_random_ascii_art : string list -> unit
 
-val move_monsters_and_check_game_over : game_state -> bool * string list
+val move_monsters_and_check_game_over : game_state -> bool -> bool * string list
 
 val update_camera_statuses : game_state -> unit
 
 val print_map : unit -> unit
+
+val apply_random_power_up : game_state -> unit
 
 val random_hazard : game_state -> unit
 
@@ -48,5 +56,3 @@ val game_loop : game_state -> unit
 val choose_difficulty : unit -> difficulty
 
 val start_or_tutorial : unit -> unit
-
-val read_ascii_art_from_file : string -> string
