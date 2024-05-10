@@ -754,6 +754,124 @@ let test_update_command_times_preserve_order _ =
     ~printer:(fun l ->
       "[" ^ String.concat "; " (List.map string_of_float l) ^ "]")
 
+let test_too_many_commands_no_commands _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  assert_equal (too_many_commands initial_state 20.0) false
+
+let test_too_many_commands_old_commands _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 [ 5.0; 9.0 ]
+  in
+  assert_equal (too_many_commands initial_state 20.0) false;
+  assert_equal [] (get_command_times initial_state)
+
+let test_too_many_commands_recent_commands _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 [ 15.0; 18.0; 19.0 ]
+  in
+  assert_equal (too_many_commands initial_state 20.0) false;
+  assert_equal [ 15.0; 18.0; 19.0 ] (get_command_times initial_state)
+
+let test_too_many_commands_mixed _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0
+      [ 9.0; 10.0; 12.0; 19.5; 20.0 ]
+  in
+  assert_equal (too_many_commands initial_state 20.0) false;
+  assert_equal [ 12.0; 19.5; 20.0 ] (get_command_times initial_state)
+
+let test_too_many_commands_boundary _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0
+      [ 11.0; 12.0; 13.0; 14.0; 15.0 ]
+  in
+  assert_equal (too_many_commands initial_state 20.0) false
+
+let test_too_many_commands_over_boundary _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0
+      [ 11.0; 12.0; 13.0; 14.0; 15.0; 15.0 ]
+  in
+  assert_equal (too_many_commands initial_state 20.0) true
+
+let test_too_many_commands_under_boundary _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 [ 15.0; 16.0; 17.0 ]
+  in
+  assert_equal (too_many_commands initial_state 20.0) false
+
+let test_door_typical _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  assert_equal (power_consumption_rates initial_state "door") 5
+
+let test_door_powersaving _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters PowerSaving false Hard 0 []
+  in
+  assert_equal (power_consumption_rates initial_state "door") 3
+
+let test_light_typical _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  assert_equal (power_consumption_rates initial_state "light") 2
+
+let test_light_powersaving _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters PowerSaving false Hard 0 []
+  in
+  assert_equal (power_consumption_rates initial_state "light") 1
+
+let test_camera_typical _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  assert_equal (power_consumption_rates initial_state "camera") 1
+
+let test_camera_powersaving _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters PowerSaving false Hard 0 []
+  in
+  assert_equal (power_consumption_rates initial_state "camera") 1
+
+let test_unrecognized_action _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  assert_equal (power_consumption_rates initial_state "unknown") 0
+
 let game_suite =
   "Game Tests"
   >::: [
@@ -762,6 +880,20 @@ let game_suite =
          "Update Command Times Multiple" >:: test_update_command_times_multiple;
          "Update Command Times Preserve Order"
          >:: test_update_command_times_preserve_order;
+         "No Commands" >:: test_too_many_commands_no_commands;
+         "Old Commands" >:: test_too_many_commands_old_commands;
+         "Recent Commands" >:: test_too_many_commands_recent_commands;
+         "Mixed Commands" >:: test_too_many_commands_mixed;
+         "Boundary" >:: test_too_many_commands_boundary;
+         "Over Boundary" >:: test_too_many_commands_over_boundary;
+         "Under Boundary" >:: test_too_many_commands_under_boundary;
+         "door typical" >:: test_door_typical;
+         "door powersaving" >:: test_door_powersaving;
+         "light typical" >:: test_light_typical;
+         "light powersaving" >:: test_light_powersaving;
+         "camera typical" >:: test_camera_typical;
+         "camera powersaving" >:: test_camera_powersaving;
+         "unrecognized action" >:: test_unrecognized_action;
        ]
 
 (* ----- OUnit Runner ----- *)
