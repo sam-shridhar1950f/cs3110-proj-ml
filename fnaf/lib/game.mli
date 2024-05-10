@@ -1,7 +1,9 @@
 open! Unix
 open! Monster
 
-type power_mode
+type power_mode =
+  | Typical
+  | PowerSaving
 
 type hazard
 
@@ -15,11 +17,41 @@ val time_is_up : game_state -> bool
 
 val game_hour : game_state -> int
 
+val gen_state : int -> float -> bool -> bool -> hazard option -> bool -> bool -> (int * bool) list -> monster list -> power_mode -> bool -> difficulty -> int -> float list -> game_state
+
+val get_battery : game_state -> int
+
+val get_start_time : game_state -> float
+
+val get_door_closed : game_state -> bool
+
+val get_door_jammed : game_state -> bool
+
+val get_hazard : game_state -> hazard option
+
+val get_light_on : game_state -> bool
+
+val get_light_malfunction : game_state -> bool
+
+val get_camera_statuses : game_state -> (int * bool) list
+
+val get_monsters : game_state -> monster list
+
+val get_power_mode : game_state -> power_mode
+
+val get_generator_on : game_state -> bool
+
+val get_difficulty : game_state -> difficulty
+
+val get_last_announced_hour : game_state -> int
+
+val get_command_times : game_state -> float list
+
+val initial_state : difficulty -> game_state
+
 val update_command_times: game_state -> float -> unit
 
 val too_many_commands: game_state -> float -> bool
-
-val initial_state : difficulty -> game_state
 
 val read_ascii_art_from_file : string -> string
 

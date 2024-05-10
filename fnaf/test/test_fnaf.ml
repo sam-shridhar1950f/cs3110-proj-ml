@@ -45,7 +45,7 @@ let gen_bool = QCheck.Gen.bool
 let gen_triple = QCheck.Gen.triple gen_monster gen_difficulty gen_bool
 let gen_monster_list = QCheck.Gen.list gen_monster
 
-(* ----- Test Definitions ----- *)
+(* ----- Monster Tests ----- *)
 
 let test_name _ =
   let mon = create_monster "michael" 5 0.0 in
@@ -108,8 +108,8 @@ let test_reset_when_door_closed _ =
 (* Test pace change based on difficulty levels *)
 let test_pace_change_with_difficulty _ =
   let monster = create_monster "Chica" 5 0.0 in
-  let easy_pace = get_pace Easy monster false in
-  let hard_pace = get_pace Hard monster false in
+  let easy_pace = get_pace Easy monster false false in
+  let hard_pace = get_pace Hard monster false false in
   assert_bool "Hard difficulty should have a faster pace" (hard_pace < easy_pace)
 
 (* Test non-movement when the game starts (time = 0) *)
@@ -256,8 +256,8 @@ let test_individual_generator_effects _ =
   assert_location monsters [ 5; 4; 4; 4 ]
 
 let test_difficulty_impact _ =
-  let easy_pace = get_pace Easy (create_monster "Chica" 5 0.0) false in
-  let hard_pace = get_pace Hard (create_monster "Chica" 5 0.0) false in
+  let easy_pace = get_pace Easy (create_monster "Chica" 5 0.0) false false in
+  let hard_pace = get_pace Hard (create_monster "Chica" 5 0.0) false false in
   assert_bool "Hard difficulty should result in a faster pace"
     (hard_pace < easy_pace)
 
@@ -444,9 +444,9 @@ let test_monsters_differential_movement _ =
 
 let test_multiple_generators_impact_pace _ =
   let monster = create_monster "Bonnie" 2 0.0 in
-  let pace_initial = get_pace Hard monster false in
-  let pace_with_generator = get_pace Hard monster true in
-  let pace_after_double_toggle = get_pace Hard monster false in
+  let pace_initial = get_pace Hard monster false false in
+  let pace_with_generator = get_pace Hard monster true false in
+  let pace_after_double_toggle = get_pace Hard monster false false in
   assert_equal pace_initial pace_after_double_toggle;
   assert_bool "Pace with generator should be less"
     (pace_with_generator < pace_initial)
@@ -511,7 +511,7 @@ let test_full_night_monster_movement_simulation _ =
       (fun m ->
         let time = float_of_int (hour * 3600) in
         (* Convert hours to seconds *)
-        let difficulty = if hour < 3 then Normal else Hard in
+        let difficulty = if hour >= 3 then Hard else Normal in
         let door_status = hour mod 2 = 0 in
         (* Alternate door status every hour *)
         ignore (move_monster m time difficulty door_status false false))
@@ -592,8 +592,8 @@ let prop_monster_resets_if_door_closed =
 let prop_generator_decreases_pace =
   Test.make ~count:1000 ~name:"prop_generator_decreases_pace" (make gen_triple)
     (fun (monster, difficulty, _) ->
-      let pace_with_gen = get_pace difficulty monster true in
-      let pace_without_gen = get_pace difficulty monster false in
+      let pace_with_gen = get_pace difficulty monster true false in
+      let pace_without_gen = get_pace difficulty monster false false in
       get_location monster >= 3 || pace_with_gen < pace_without_gen)
 
 (* Property: All monsters move consistently under the same conditions *)
@@ -620,8 +620,7 @@ let prop_consistent_movement =
       in
       List.for_all (fun did_move -> did_move) moved_monsters)
 
-(* ----- Test Suite ----- *)
-let suite =
+let monster_suite =
   "Monster Tests"
   >::: [
          "Get Name" >:: test_name;
@@ -706,5 +705,66 @@ let suite =
          QCheck_ounit.to_ounit2_test prop_consistent_movement;
        ]
 
+(* ----- Game Tests ----- *)
+
+let test_update_command_times _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 [ 3. ]
+  in
+  let new_time = 123.45 in
+  update_command_times initial_state new_time;
+  assert_equal [ new_time; 3. ] (get_command_times initial_state)
+    ~printer:(fun l ->
+      "[" ^ String.concat "; " (List.map string_of_float l) ^ "]")
+
+let test_update_command_times_empty _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  let new_time = 123.45 in
+  update_command_times initial_state new_time;
+  assert_equal [ new_time ] (get_command_times initial_state) ~printer:(fun l ->
+      "[" ^ String.concat "; " (List.map string_of_float l) ^ "]")
+
+let test_update_command_times_multiple _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  let times = [ 123.45; 67.89; 12.34 ] in
+  List.iter (update_command_times initial_state) times;
+  assert_equal (List.rev times) (get_command_times initial_state)
+    ~printer:(fun l ->
+      "[" ^ String.concat "; " (List.map string_of_float l) ^ "]")
+
+let test_update_command_times_preserve_order _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  update_command_times initial_state 50.0;
+  update_command_times initial_state 100.0;
+  assert_equal [ 100.0; 50.0 ] (get_command_times initial_state)
+    ~printer:(fun l ->
+      "[" ^ String.concat "; " (List.map string_of_float l) ^ "]")
+
+let game_suite =
+  "Game Tests"
+  >::: [
+         "Update Command Times" >:: test_update_command_times;
+         "Update Command Times Empty" >:: test_update_command_times_empty;
+         "Update Command Times Multiple" >:: test_update_command_times_multiple;
+         "Update Command Times Preserve Order"
+         >:: test_update_command_times_preserve_order;
+       ]
+
 (* ----- OUnit Runner ----- *)
-let () = run_test_tt_main suite
+let () =
+  run_test_tt_main monster_suite;
+  run_test_tt_main game_suite

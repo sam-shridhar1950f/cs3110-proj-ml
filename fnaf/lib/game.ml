@@ -2,7 +2,7 @@ open! Unix
 open! Monster
 
 type power_mode =
-  | Normal
+  | Typical
   | PowerSaving
 
 type hazard =
@@ -50,17 +50,40 @@ let time_is_up state = elapsed_time state >= 516.0
 let game_hour state = int_of_float (elapsed_time state /. 86.0)
 (* 86 seconds = Hour *)
 
-let update_command_times state time =
-  state.command_times <- time :: state.command_times
+let gen_state battery start_time door_closed door_jammed hazard light_on
+    light_malfunction camera_statuses monsters power_mode generator_on
+    difficulty last_announced_hour command_times =
+  {
+    battery;
+    start_time;
+    door_closed;
+    door_jammed;
+    hazard;
+    light_on;
+    light_malfunction;
+    camera_statuses;
+    monsters;
+    power_mode;
+    generator_on;
+    difficulty;
+    last_announced_hour;
+    command_times;
+  }
 
-let too_many_commands state time =
-  let ten_seconds_ago = time -. 10.0 in
-  let recent_commands =
-    List.filter (fun time -> time > ten_seconds_ago) state.command_times
-  in
-  state.command_times <- recent_commands;
-  (* shorten command_times list since older times won't ever be used *)
-  List.length recent_commands > 5
+let get_battery state = state.battery
+let get_start_time state = state.start_time
+let get_door_closed state = state.door_closed
+let get_door_jammed state = state.door_jammed
+let get_hazard state = state.hazard
+let get_light_on state = state.light_on
+let get_light_malfunction state = state.light_malfunction
+let get_camera_statuses state = state.camera_statuses
+let get_monsters state = state.monsters
+let get_power_mode state = state.power_mode
+let get_generator_on state = state.generator_on
+let get_difficulty state = state.difficulty
+let get_last_announced_hour state = state.last_announced_hour
+let get_command_times state = state.command_times
 
 let initial_state difficulty =
   {
@@ -72,7 +95,7 @@ let initial_state difficulty =
     light_malfunction = false;
     camera_statuses = List.init 5 (fun i -> (i + 1, false));
     monsters = init_monsters;
-    power_mode = Normal;
+    power_mode = Typical;
     generator_on = false;
     hazard = None;
     difficulty;
@@ -80,6 +103,18 @@ let initial_state difficulty =
     (* Initialize to -1 so it will definitely update on the first hour *)
     command_times = [];
   }
+
+let update_command_times state time =
+  state.command_times <- time :: state.command_times
+
+let too_many_commands state time =
+  let ten_seconds_ago = time -. 10.0 in
+  let recent_commands =
+    List.filter (fun time -> time > ten_seconds_ago) state.command_times
+  in
+  state.command_times <- recent_commands;
+  (* shorten command_times list since older times won't ever be used *)
+  List.length recent_commands > 5
 
 let read_ascii_art_from_file filename =
   let input_channel = open_in filename in
@@ -109,19 +144,19 @@ let display_ascii_art filename =
 
 let power_consumption_rates state action : int =
   match (state.power_mode, action) with
-  | Normal, "door" -> 5
+  | Typical, "door" -> 5
   | PowerSaving, "door" -> 3
-  | Normal, "light" -> 2
+  | Typical, "light" -> 2
   | PowerSaving, "light" -> 1
-  | Normal, "camera" -> 1
+  | Typical, "camera" -> 1
   | PowerSaving, "camera" -> 1
   | _ -> 0
 
 let toggle_power_mode state =
   state.power_mode <-
-    (if state.power_mode = Normal then PowerSaving else Normal);
+    (if state.power_mode = Typical then PowerSaving else Typical);
   print_endline
-    (if state.power_mode = Normal then "Normal power mode activated."
+    (if state.power_mode = Typical then "Normal power mode activated."
      else "Power-saving mode activated.")
 
 let operate_generator state =
