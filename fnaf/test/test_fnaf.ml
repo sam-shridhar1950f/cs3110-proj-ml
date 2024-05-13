@@ -872,6 +872,92 @@ let test_unrecognized_action _ =
   in
   assert_equal (power_consumption_rates initial_state "unknown") 0
 
+let test_opgenerator_battery_below_90 _ =
+  let initial_state =
+    gen_state 80 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  operate_generator initial_state;
+  assert_equal 90 (get_battery initial_state)
+
+let test_opgenerator_battery_at_90 _ =
+  let initial_state =
+    gen_state 90 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  operate_generator initial_state;
+  assert_equal 100 (get_battery initial_state)
+
+let test_opgenerator_battery_above_90 _ =
+  let initial_state =
+    gen_state 95 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  operate_generator initial_state;
+  assert_equal 100 (get_battery initial_state)
+
+let test_opgenerator_battery_at_100 _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  operate_generator initial_state;
+  assert_equal 100 (get_battery initial_state)
+
+let test_toggle_generator_off _ =
+  let initial_state =
+    gen_state 80 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical true Hard 0 []
+  in
+  toggle_generator initial_state;
+  assert_equal false (get_generator_on initial_state);
+  assert_equal 80 (get_battery initial_state)
+
+let test_toggle_generator_on_below_90 _ =
+  let initial_state =
+    gen_state 80 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  toggle_generator initial_state;
+  assert_equal true (get_generator_on initial_state);
+  assert_equal 90 (get_battery initial_state)
+
+let test_toggle_generator_on_at_90 _ =
+  let initial_state =
+    gen_state 90 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  toggle_generator initial_state;
+  assert_equal true (get_generator_on initial_state);
+  assert_equal 100 (get_battery initial_state)
+
+let test_toggle_generator_on_above_90 _ =
+  let initial_state =
+    gen_state 95 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  toggle_generator initial_state;
+  assert_equal true (get_generator_on initial_state);
+  assert_equal 100 (get_battery initial_state)
+
+let test_toggle_generator_on_at_100 _ =
+  let initial_state =
+    gen_state 100 0.0 true false None false false
+      [ (1, true); (2, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  toggle_generator initial_state;
+  assert_equal false (get_generator_on initial_state);
+  assert_equal 100 (get_battery initial_state)
+
 let game_suite =
   "Game Tests"
   >::: [
@@ -887,13 +973,27 @@ let game_suite =
          "Boundary" >:: test_too_many_commands_boundary;
          "Over Boundary" >:: test_too_many_commands_over_boundary;
          "Under Boundary" >:: test_too_many_commands_under_boundary;
-         "door typical" >:: test_door_typical;
-         "door powersaving" >:: test_door_powersaving;
-         "light typical" >:: test_light_typical;
-         "light powersaving" >:: test_light_powersaving;
-         "camera typical" >:: test_camera_typical;
-         "camera powersaving" >:: test_camera_powersaving;
-         "unrecognized action" >:: test_unrecognized_action;
+         "Door typical" >:: test_door_typical;
+         "Door powersaving" >:: test_door_powersaving;
+         "Light typical" >:: test_light_typical;
+         "Light powersaving" >:: test_light_powersaving;
+         "Camera typical" >:: test_camera_typical;
+         "Camera powersaving" >:: test_camera_powersaving;
+         "Unrecognized action" >:: test_unrecognized_action;
+         "Operate generator battery below 90"
+         >:: test_opgenerator_battery_below_90;
+         "Operate generator battery at 90" >:: test_opgenerator_battery_at_90;
+         "Operate generator battery above 90"
+         >:: test_opgenerator_battery_above_90;
+         "Operate generator battery at 100" >:: test_opgenerator_battery_at_100;
+         "Toggle generator off" >:: test_toggle_generator_off;
+         "Toggle generator on battery below 90"
+         >:: test_toggle_generator_on_below_90;
+         "Toggle generator on battery at 90" >:: test_toggle_generator_on_at_90;
+         "Toggle generator on battery above 90"
+         >:: test_toggle_generator_on_above_90;
+         "Toggle generator on battery at 100"
+         >:: test_toggle_generator_on_at_100;
        ]
 
 (* ----- OUnit Runner ----- *)
