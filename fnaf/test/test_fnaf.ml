@@ -45,6 +45,9 @@ let gen_bool = QCheck.Gen.bool
 let gen_triple = QCheck.Gen.triple gen_monster gen_difficulty gen_bool
 let gen_monster_list = QCheck.Gen.list gen_monster
 
+let battery_within_bounds state =
+  get_battery state >= 0 && get_battery state <= 100
+
 (* ----- Monster Tests ----- *)
 
 let test_name _ =
@@ -958,6 +961,46 @@ let test_toggle_generator_on_at_100 _ =
   assert_equal false (get_generator_on initial_state);
   assert_equal 100 (get_battery initial_state)
 
+let test_apply_random_power_up_qcheck =
+  Test.make ~count:1000 ~name:"test_apply_random_power_up_qcheck"
+    (make ~print:Print.int (Gen.int_bound 100))
+    (fun initial_battery ->
+      let state =
+        gen_state initial_battery 0.0 true false None false false
+          [ (1, true); (2, false) ]
+          init_monsters Typical false Hard 0 [ 3. ]
+      in
+      apply_random_power_up state;
+      battery_within_bounds state)
+
+let test_resolve_power_surge _ =
+  let state =
+    gen_state 80 0.0 true true (Some PowerSurge) false true
+      [ (1, false); (2, false); (3, false); (4, false); (5, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  resolve_hazard state;
+  assert_equal None (get_hazard state);
+  assert_equal
+    [ (1, true); (2, true); (3, true); (4, true); (5, true) ]
+    (get_camera_statuses state);
+  assert_equal true (get_light_malfunction state);
+  assert_equal true (get_door_jammed state)
+
+let test_resolve_power_surge_alone _ =
+  let state =
+    gen_state 80 0.0 true false (Some PowerSurge) false false
+      [ (1, false); (2, false); (3, false); (4, false); (5, false) ]
+      init_monsters Typical false Hard 0 []
+  in
+  resolve_hazard state;
+  assert_equal None (get_hazard state);
+  assert_equal
+    [ (1, true); (2, true); (3, true); (4, true); (5, true) ]
+    (get_camera_statuses state);
+  assert_equal false (get_light_malfunction state);
+  assert_equal false (get_door_jammed state)
+
 let game_suite =
   "Game Tests"
   >::: [
@@ -994,6 +1037,10 @@ let game_suite =
          >:: test_toggle_generator_on_above_90;
          "Toggle generator on battery at 100"
          >:: test_toggle_generator_on_at_100;
+         QCheck_ounit.to_ounit2_test test_apply_random_power_up_qcheck;
+         "Resolve power surge with other hazards" >:: test_resolve_power_surge;
+         "Resolve power surge without other hazards"
+         >:: test_resolve_power_surge_alone;
        ]
 
 (* ----- OUnit Runner ----- *)

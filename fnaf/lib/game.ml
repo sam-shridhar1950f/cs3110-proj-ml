@@ -274,7 +274,7 @@ let random_hazard state =
 let random_events state =
   if Random.float 1.0 < 0.15 then
     (* 15% chance for a random event each hour *)
-    match Random.int 3 with
+    match Random.int 6 with
     | 0 ->
         print_endline
           "You notice an old newspaper article about missing persons. Ignore \
@@ -285,16 +285,33 @@ let random_events state =
            very wrong."
     | 2 ->
         state.door_jammed <- true;
-        print_endline "You hear a loud bang."
+        print_endline "You hear a loud bang. The door is jammed!"
+    | 3 ->
+        print_endline
+          "A distant, eerie melody plays for a few seconds before abruptly \
+           stopping."
+    | 4 ->
+        print_endline
+          "You catch a glimpse of a shadow moving quickly across the room. Was \
+           it just your imagination?"
+    | 5 ->
+        print_endline
+          "A sudden chill runs down your spine. You feel like you are being \
+           watched."
     | _ -> ()
 
 let resolve_hazard state =
   match state.hazard with
   | Some PowerSurge ->
       state.camera_statuses <-
-        List.map (fun (id, _) -> (id, true)) state.camera_statuses
-  | Some LightMalfunction -> state.light_malfunction <- false
-  | Some DoorJam -> state.door_jammed <- false
+        List.map (fun (id, _) -> (id, true)) state.camera_statuses;
+      state.hazard <- None
+  | Some LightMalfunction ->
+      state.light_malfunction <- false;
+      state.hazard <- None
+  | Some DoorJam ->
+      state.door_jammed <- false;
+      state.hazard <- None
   | None -> ()
 
 let process_command state command =

@@ -5,7 +5,10 @@ type power_mode =
   | Typical
   | PowerSaving
 
-type hazard
+type hazard =
+  | PowerSurge
+  | LightMalfunction
+  | DoorJam
 
 type game_state
 
