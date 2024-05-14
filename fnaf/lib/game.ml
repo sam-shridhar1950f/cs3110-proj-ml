@@ -124,8 +124,8 @@ let too_many_commands state time =
     List.filter (fun t -> t > ten_seconds_ago) state.command_times
   in
   state.command_times <- recent_commands;
-  print_endline (string_of_float ten_seconds_ago);
-  print_endline (list_to_string (List.map string_of_float recent_commands));
+  (* print_endline (string_of_float ten_seconds_ago); print_endline
+     (list_to_string (List.map string_of_float recent_commands)); *)
   (* shorten command_times list since older times won't ever be used *)
   List.length recent_commands > 5
 
