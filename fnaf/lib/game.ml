@@ -104,15 +104,28 @@ let initial_state difficulty =
     command_times = [];
   }
 
+let list_to_string lst =
+  let rec aux acc = function
+    | [] -> acc
+    | [ t ] -> acc ^ ", and " ^ t
+    | h :: t -> aux (acc ^ h ^ ", ") t
+  in
+  match lst with
+  | [] -> ""
+  | [ t ] -> t
+  | items -> aux "" items
+
 let update_command_times state time =
   state.command_times <- time :: state.command_times
 
 let too_many_commands state time =
   let ten_seconds_ago = time -. 10.0 in
   let recent_commands =
-    List.filter (fun time -> time > ten_seconds_ago) state.command_times
+    List.filter (fun t -> t > ten_seconds_ago) state.command_times
   in
   state.command_times <- recent_commands;
+  print_endline (string_of_float ten_seconds_ago);
+  print_endline (list_to_string (List.map string_of_float recent_commands));
   (* shorten command_times list since older times won't ever be used *)
   List.length recent_commands > 5
 
@@ -377,7 +390,6 @@ let process_command state command =
         let power_cost = power_consumption_rates state "camera" in
         state.battery <- state.battery - power_cost;
         update_camera_statuses state;
-        update_command_times state current_time;
         let monster_names =
           get_monsters_at_location state.monsters cam_number
         in
@@ -399,19 +411,7 @@ let process_command state command =
       display_ascii_art name
   | _ -> print_endline "Invalid command"
 
-let list_to_string lst =
-  let rec aux acc = function
-    | [] -> acc
-    | [ t ] -> acc ^ ", and " ^ t
-    | h :: t -> aux (acc ^ h ^ ", ") t
-  in
-  match lst with
-  | [] -> ""
-  | [ t ] -> t
-  | items -> aux "" items
-
 let rec game_loop state =
-  let current_time = elapsed_time state in
   let current_hour = game_hour state in
   if time_is_up state then
     print_endline "Time's up. The night is over. You survived!"
@@ -430,11 +430,12 @@ let rec game_loop state =
     (* Check for new hazards *)
     random_events state;
     (* Trigger potential random events *)
-    Printf.printf "Hour: %d. Battery: %d%%. Type a command: " (game_hour state)
-      state.battery;
+    Printf.printf "\nHour: %d. Battery: %d%%. Type a command: "
+      (game_hour state) state.battery;
     let command = read_line () in
     process_command state command;
     resolve_hazard state;
+    let current_time = elapsed_time state in
     (* Resolve any existing hazards *)
     let enraged = too_many_commands state current_time in
     if enraged then
@@ -474,5 +475,6 @@ let rec start_or_tutorial () =
   | "tutorial" ->
       let state = initial_state Tutorial in
       print_map ();
+      process_command state "help";
       game_loop state
   | _ -> start_or_tutorial ()
