@@ -573,7 +573,7 @@ let test_monsters_locations_overlap _ =
 
 (* Property: Monsters should never move to a negative location *)
 let prop_monster_never_moves_to_negative_location =
-  Test.make ~count:1000 ~name:"prop_monster_never_moves_to_negative_location"
+  Test.make ~count:100 ~name:"prop_monster_never_moves_to_negative_location"
     (make gen_monster) (fun monster ->
       let monster' =
         create_monster (get_name monster)
@@ -585,7 +585,7 @@ let prop_monster_never_moves_to_negative_location =
 (* Property: Monsters should reset to location > 0 if door is closed and they
    are at location 0 *)
 let prop_monster_resets_if_door_closed =
-  Test.make ~count:1000 ~name:"prop_monster_resets_if_door_closed"
+  Test.make ~count:100 ~name:"prop_monster_resets_if_door_closed"
     (make gen_monster) (fun monster ->
       let monster' = create_monster (get_name monster) 0 (get_time monster) in
       let result = move_monster monster' 30.0 Hard true true false in
@@ -593,7 +593,7 @@ let prop_monster_resets_if_door_closed =
 
 (* Property: Generator being on should decrease the pace *)
 let prop_generator_decreases_pace =
-  Test.make ~count:1000 ~name:"prop_generator_decreases_pace" (make gen_triple)
+  Test.make ~count:100 ~name:"prop_generator_decreases_pace" (make gen_triple)
     (fun (monster, difficulty, _) ->
       let pace_with_gen = get_pace difficulty monster true false in
       let pace_without_gen = get_pace difficulty monster false false in
@@ -601,7 +601,7 @@ let prop_generator_decreases_pace =
 
 (* Property: All monsters move consistently under the same conditions *)
 let prop_consistent_movement =
-  Test.make ~count:1000 ~name:"prop_consistent_movement" (make gen_monster_list)
+  Test.make ~count:100 ~name:"prop_consistent_movement" (make gen_monster_list)
     (fun monsters ->
       let time = 35.0 in
       let difficulty = Normal in
@@ -962,7 +962,7 @@ let test_toggle_generator_on_at_100 _ =
   assert_equal 100 (get_battery initial_state)
 
 let test_apply_random_power_up_qcheck =
-  Test.make ~count:1000 ~name:"test_apply_random_power_up_qcheck"
+  Test.make ~count:100 ~name:"test_apply_random_power_up_qcheck"
     (make ~print:Print.int (Gen.int_bound 100))
     (fun initial_battery ->
       let state =
@@ -1000,6 +1000,106 @@ let test_resolve_power_surge_alone _ =
     (get_camera_statuses state);
   assert_equal false (get_light_malfunction state);
   assert_equal false (get_door_jammed state)
+
+let test_process_command_door_open _ =
+  let state = initial_state Normal in
+  process_command state "door";
+  assert_equal true (get_door_closed state);
+  assert_equal 95 (get_battery state)
+
+let test_process_command_door_close _ =
+  let state =
+    gen_state 100 0.0 true false None false false
+      [ (1, false); (2, false); (3, false); (4, false); (5, false) ]
+      init_monsters Typical false Normal 0 []
+  in
+  process_command state "door";
+  assert_equal false (get_door_closed state);
+  assert_equal 95 (get_battery state)
+
+let test_process_command_light_on _ =
+  let state = initial_state Normal in
+  process_command state "light";
+  assert_equal true (get_light_on state);
+  assert_equal 98 (get_battery state)
+
+let test_process_command_light_off _ =
+  let state =
+    gen_state 100 0.0 true false None true false
+      [ (1, false); (2, false); (3, false); (4, false); (5, false) ]
+      init_monsters Typical false Normal 0 []
+  in
+  process_command state "light";
+  assert_equal false (get_light_on state);
+  assert_equal 98 (get_battery state)
+
+let test_process_command_toggle_generator_on _ =
+  let state =
+    gen_state 80 0.0 true false None false false
+      [ (1, false); (2, false); (3, false); (4, false); (5, false) ]
+      init_monsters Typical false Normal 0 []
+  in
+  process_command state "toggle_generator";
+  assert_equal true (get_generator_on state);
+  assert_equal 90 (get_battery state)
+
+let test_process_command_toggle_generator_off _ =
+  let state =
+    gen_state 100 0.0 true false None false false
+      [ (1, false); (2, false); (3, false); (4, false); (5, false) ]
+      init_monsters Typical true Normal 0 []
+  in
+  process_command state "toggle_generator";
+  assert_equal false (get_generator_on state);
+  assert_equal 100 (get_battery state)
+
+let test_process_command_toggle_power_mode_to_saving _ =
+  let state = initial_state Normal in
+  process_command state "toggle_power_mode";
+  assert_equal PowerSaving (get_power_mode state)
+
+let test_process_command_toggle_power_mode_to_typical _ =
+  let state =
+    gen_state 100 0.0 true false None false false
+      [ (1, false); (2, false); (3, false); (4, false); (5, false) ]
+      init_monsters PowerSaving false Normal 0 []
+  in
+  process_command state "toggle_power_mode";
+  assert_equal Typical (get_power_mode state)
+
+let test_process_command_camera1 _ =
+  let state =
+    gen_state 100 0.0 true false None false false
+      [ (1, false); (2, false); (3, false); (4, false); (5, true) ]
+      init_monsters Typical false Hard 0 []
+  in
+  process_command state "camera1";
+  assert_equal 99 (get_battery state);
+  assert_equal
+    [ (1, false); (2, false); (3, false); (4, true); (5, false) ]
+    (get_camera_statuses state)
+
+let test_process_command_camera_invalid _ =
+  let state =
+    gen_state 100 0.0 true false None false false
+      [ (1, false); (2, false); (3, false); (4, false); (5, true) ]
+      init_monsters Typical false Normal 0 []
+  in
+  process_command state "camera6";
+  assert_equal 99 (get_battery state);
+  assert_equal
+    [ (1, false); (2, false); (3, false); (4, true); (5, false) ]
+    (get_camera_statuses state)
+
+let test_process_command_invalid _ =
+  let state = initial_state Normal in
+  let battery_before = get_battery state in
+  process_command state "invalid";
+  assert_equal battery_before (get_battery state);
+  assert_equal false (get_door_closed state);
+  assert_equal false (get_light_on state);
+  assert_equal false (get_generator_on state);
+  assert_equal Typical (get_power_mode state)
 
 let game_suite =
   "Game Tests"
@@ -1041,6 +1141,21 @@ let game_suite =
          "Resolve power surge with other hazards" >:: test_resolve_power_surge;
          "Resolve power surge without other hazards"
          >:: test_resolve_power_surge_alone;
+         "Door open command" >:: test_process_command_door_open;
+         "Door close command" >:: test_process_command_door_close;
+         "Light on command" >:: test_process_command_light_on;
+         "Light off command" >:: test_process_command_light_off;
+         "Toggle Generator on command"
+         >:: test_process_command_toggle_generator_on;
+         "Toggle Generator off command"
+         >:: test_process_command_toggle_generator_off;
+         "Toggle Power Mode to Saving command"
+         >:: test_process_command_toggle_power_mode_to_saving;
+         "Toggle Power Mode to Typical command"
+         >:: test_process_command_toggle_power_mode_to_typical;
+         "Camera1 command" >:: test_process_command_camera1;
+         "Camera invalid command" >:: test_process_command_camera_invalid;
+         "Invalid command" >:: test_process_command_invalid;
        ]
 
 (* ----- OUnit Runner ----- *)

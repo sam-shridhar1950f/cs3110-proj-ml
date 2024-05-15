@@ -5,6 +5,7 @@ type power_mode =
   | Typical
   | PowerSaving
 (** type of power mode. *)
+
 type hazard =
   | PowerSurge
   | LightMalfunction
@@ -25,6 +26,7 @@ val time_is_up : game_state -> bool
 
 val game_hour : game_state -> int
 (** current hour of game *)
+
 val gen_state : int -> float -> bool -> bool -> hazard option -> bool -> bool -> (int * bool) list -> monster list -> power_mode -> bool -> difficulty -> int -> float list -> game_state
 (** generates a game state with given parameters *)
 
@@ -72,6 +74,9 @@ val get_command_times : game_state -> float list
 
 val initial_state : difficulty -> game_state
 (** get initial state of the game based on difficulty*)
+
+val list_to_string : string list -> string
+(** [list_to_string ["a";"b";"c"]] is ["a, and b, and c"]*)
 
 val update_command_times: game_state -> float -> unit
 (** [update_command_times state time] adds [time] to [state]'s list of command times*)
@@ -121,9 +126,6 @@ val resolve_hazard : game_state -> unit
 val process_command : game_state -> string -> unit
 (** [process_command state command] does the preset action corresponding to [command] or prints an error message if the command
     is invalid.*)
-
-val list_to_string : string list -> string
-(** [list_to_string ["a";"b";"c"]] is ["a, and b, and c"]*)
 
 val game_loop : game_state -> unit
 (** [game_loop state] is recursive and loops until the game ends. With every iteration it updates the game state, triggers
