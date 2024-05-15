@@ -1,0 +1,424 @@
+commit 6e747a5a36b5edf569d2ca8bf9aa4b9c2d9bda16
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Wed May 15 17:33:09 2024 -0400
+
+    Final updates
+    
+    - Added yaml and test_plan
+    - Modified game.mli to match function order in game.ml
+    - Reduced QCheck printing by reducing count to 100
+    - Wrote process_command tests
+
+commit f12f4776055caf24930b2575d53e3c639a7023ea
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Tue May 14 15:29:35 2024 -0400
+
+    remove debug print from too_many_commands
+
+commit 97651cb0c6405bb6ecb2879fb458685a7fba0a19
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Tue May 14 15:21:46 2024 -0400
+
+    Add intro messages and fix enraged detection
+    
+    - Game explainer + how to use help
+    - command times updated twice for each camera instruction and current time checker was placed before commands retrieved so bad offset
+
+commit 2c473c0f80c85b68249900c5a8c5872df741c554
+Author: Larry <ltt28@cornell.edu>
+Date:   Tue May 14 13:21:33 2024 -0400
+
+    added game.mli documentation
+
+commit 5f51dafeb4c8018ba014796cbaec20e349373a88
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Tue May 14 13:06:08 2024 -0400
+
+    Fix map layout
+    
+    - 5 to 1 directly instead of a branch
+
+commit 2aa77fe5dd01ac35c2f4f3923eafbdb3bde2bbaa
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Mon May 13 18:35:53 2024 -0400
+
+    Tested resolve_hazard and apply_random_power_up
+    
+    - Exposed hazard in game.mli
+    - Added more interesting random_events
+    - Used QCheck for random power up and standard OUnit for resolve_hazard
+
+commit aad25f18a48d868dc84eadaf928cfad941050711
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Mon May 13 17:34:46 2024 -0400
+
+    Add toggle_generator and operate_generator tests
+    
+    - Tested by battery conditions
+
+commit d0dfb2f421032ef79c3bbf59c292a76297c8d3b0
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Fri May 10 00:56:12 2024 -0400
+
+    Wrote more tests
+    
+    - Tested power_consumption_rates and too_many_commands
+
+commit 49e72bd5e68cb05a485b446d7ee399bad603921b
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Fri May 10 00:04:44 2024 -0400
+
+    Added first game tests
+    
+    - Created getters/setter for game_state
+    - Renamed "Normal" for power_mode to "Typical" to avoid overlap with difficulty
+    - Fixed tests involving get_pace to include new "enraged" parameter
+    - Wrote update_command_times tests
+
+commit 78ab4753db863d0a9d4394c96e9149d7d377bb81
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Thu May 9 01:12:43 2024 -0400
+
+    Added enraged monster status
+    
+    - Add mutable float list command_times to track recent command times
+    - Tracks most recent 10 seconds of commands
+    - Monster tests may need new "enraged" parameter
+
+commit 1bdad32e03f4ef07cd0202895b61b3c7e4e74264
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Tue May 7 10:16:20 2024 -0400
+
+    merging difficulties
+
+commit 7978bddb535357989c8d95d0665b11e3206fe310
+Merge: f7f9dcb 3989736
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Tue May 7 10:14:50 2024 -0400
+
+    Merge branch 'terminalgame' of https://github.com/sam-shridhar1950f/cs3110-proj-ml into terminalgame
+
+commit 39897366507d9a356207ed96ed91d7c93b668ed4
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Tue May 7 11:28:38 2024 -0400
+
+    Autoformatted
+
+commit f7f9dcbbe9fc8a79d71b649e2359beff6b03f90d
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Tue May 7 10:11:38 2024 -0400
+
+    test monster overlap location
+
+commit 18b9d8e85f47d1c1ad3faeb8b61511749f8cbb5e
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Tue May 7 09:44:40 2024 -0400
+
+    game condition testing
+
+commit d7535a31254ebd6a4e6c3a32225272eaf77e7dc6
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Tue May 7 09:14:49 2024 -0400
+
+    more tests on game compilation
+
+commit 6eb37d068c3c1e19dfa7a4d5e2f6bf70e3b4f86b
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Sun May 5 22:44:02 2024 -0400
+
+    more tests
+
+commit 8ae1fa4224eaef6d2a80625e91a08af3df1aaa09
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Sun May 5 14:46:43 2024 -0400
+
+    Finished monster compilation unit tests
+    
+    - Wrote tests for update_monsters with considerations for door and generator statuses and get_monsters_at_location
+    - Updated update_monsters to list monsters in original order
+
+commit 67461c89f1114c978c58a9ce86638c1eefc29766
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Fri May 3 11:33:11 2024 -0400
+
+    Factored game logic into game compilation unit
+    
+    - All definitions of game functions in game.mli (not documented yet)
+    - Factored out printing intro messages into print_intro function
+    - Modified dune file to include unix and show module Game
+
+commit e1b84ab08851f372a5fa814f064b12240d69b2b7
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Fri May 3 10:47:50 2024 -0400
+
+    Modify print statements and user input read
+    
+    - Newlines for introduction
+    - If invalid user input for start_or_tutorial then recurse instead of quitting
+
+commit 26040f16cfa16f21b3d39de077be1443d6225b72
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Thu May 2 18:37:43 2024 -0400
+
+    Added 8 tests for monster
+    
+    - Tested create, get_name, get_location, and get_time
+    - Autoformatted main
+
+commit 5103bd31e64c9cd77ed7cfaf959b01d63d4cf163
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Thu May 2 13:37:34 2024 -0400
+
+    ascii art letters and description
+
+commit 5d76a373c7ed4f6e97aee35a99af7737e6aadb95
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Wed May 1 13:14:35 2024 -0400
+
+    random events: door mechanism and light mechanism
+
+commit f8d19c40b28a72cf1ca31cc976ca98c130eab481
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Wed May 1 12:45:00 2024 -0400
+
+    test cleanup
+
+commit adaa8c73b6f6c02228ba30c5678926548f462c90
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Tue Apr 30 23:59:50 2024 -0400
+
+    door test
+
+commit 23f4be60d2f4ba0e419834c36a1e07b037fc1659
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Mon Apr 29 10:50:07 2024 -0400
+
+    testing
+    - time, variable tests
+
+commit 042aa4c43a196614c82908edd0a41ad46f7e22a5
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Sun Apr 28 23:29:31 2024 -0400
+
+    remaining tests, difficulty impact test
+
+commit 716f8d8e237fded67fb005f0f8a8c071883f7fde
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Sun Apr 28 23:08:47 2024 -0400
+
+    consistent runs tests
+
+commit 3332fbc86c91df88a6ad58531b323b28a93cbd12
+Merge: 6c55eba b2e01a6
+Author: Samarth (Sam) Shridhar <sam.shridhar1950f@gmail.com>
+Date:   Sun Apr 28 22:45:50 2024 -0400
+
+    Merge pull request #1 from sam-shridhar1950f/main
+    
+    added tutorial mode, help command, and map command
+
+commit 6c55ebace9c303c0e04569d244e073e48322400e
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Sun Apr 28 22:39:01 2024 -0400
+
+    test extreme time conditions
+
+commit 77dca8089b2773f01c432ba52c96e804d57944a7
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Sun Apr 28 22:27:35 2024 -0400
+
+    Add monster compilation unit tests
+    
+    - Add create and get functions in monster for testing
+    - Implemented 20 ounit/qcheck tests
+
+commit b2e01a69830deb223a29f36e611283fcc935f372
+Author: Larry <ltt28@cornell.edu>
+Date:   Sat Apr 27 20:50:09 2024 -0400
+
+    added tutorial mode, help command, and map command
+
+commit 0a3c675dd92cef37c2ad5628505c37bd898ec06e
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Mon Apr 22 23:10:39 2024 -0400
+
+    Finish monster.mli documentation
+    
+    - Wrote ocamldoc for get_locations and get_monsters_at_location
+
+commit b24bdbe457a7fb09c79d35a89290432fa2e074be
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Mon Apr 22 22:59:53 2024 -0400
+
+    Add monster compilation unit
+    
+    - Moved graphical game in main.ml to terminal.ml
+    - Created monster compilation unit to handle all monster functionality
+    - Moved terminal game into main.ml and updated all functions to use monster compilation unit
+
+commit eb001043995de6fe2ccbcf39e3ff949f7d75f962
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Thu Apr 18 01:42:49 2024 -0400
+
+    generator
+    - added a generator which adds power but attracts monsters
+
+commit 660fa51ed870679b81ebe1d195331724d4bc2797
+Author: sam-shridhar1950f <sam.shridhar1950f@gmail.com>
+Date:   Thu Apr 18 00:58:58 2024 -0400
+
+    ascii art
+    - added ascii art for fnaf game
+
+commit 40d5c5db54fec868ab0596e433321991e0f94e9b
+Author: root <root@DESKTOP-S7PF198.localdomain>
+Date:   Wed Apr 17 23:32:51 2024 -0400
+
+    bro
+
+commit f649fe9d4865426df6ba3b4ee0d528adfa2f150d
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Thu Apr 11 15:40:31 2024 -0400
+
+    Fix INSTALL.md instructions for terminal game
+    
+    - Replace /bin with bin in instructions to avoid going to the root bin directory
+
+commit 0117ca79f54d49c3b274cb35c2dfa9fdcdc70d95
+Author: Larry <ltt28@cornell.edu>
+Date:   Thu Mar 28 19:51:46 2024 -0400
+
+    removing more images
+
+commit f5fcdd08209f5baffa15598271a708b63a73383c
+Author: Larry <ltt28@cornell.edu>
+Date:   Thu Mar 28 19:50:20 2024 -0400
+
+    removed images that exceeded file size
+
+commit 7f95d2292aac45c1aaa63ddc732b33e76512c265
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Thu Mar 28 18:20:44 2024 -0400
+
+    Add environment and character images
+    
+    - Took pictures of Gates 4th floor hallways, elevator refuge area, collaboration space, and stairs, and basement refuge area
+    - Noted ideas for animatronic character general appearances
+
+commit 70330eb02c081a9e02fe7810c58af2eba9458934
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Thu Mar 28 15:56:58 2024 -0400
+
+    Update INSTALL.md with terminal version run bug fix
+    
+    - Added note to try `ocamlrun game` instead of `./game` if latter does not work
+
+commit c04f198a3fc74d57e6fc88f6feb2cb6721b630a2
+Author: Larry <ltt28@cornell.edu>
+Date:   Thu Mar 28 15:06:30 2024 -0400
+
+    moved installation instructions to INSTALL.md
+
+commit 4d78174dfdd7f439d81f2384848970f1f0d5d474
+Author: Samarth (Sam) Shridhar <sam.shridhar1950f@gmail.com>
+Date:   Wed Mar 27 11:48:03 2024 -0400
+
+    Update README.md
+
+commit 6c74b15b1c7d35759eda0252e85ea8d87a35f272
+Author: Samarth (Sam) Shridhar <sam.shridhar1950f@gmail.com>
+Date:   Wed Mar 27 11:47:44 2024 -0400
+
+    usage
+
+commit db49b7463862eb634ec1886a138e77941295c672
+Author: Samarth (Sam) Shridhar <sam.shridhar1950f@gmail.com>
+Date:   Wed Mar 27 11:45:52 2024 -0400
+
+    game usage
+
+commit f3f4f0d3241e716e6ca301f89ada3b31865a45d1
+Author: Samarth (Sam) Shridhar <sam.shridhar1950f@gmail.com>
+Date:   Wed Mar 27 11:44:54 2024 -0400
+
+    terminal gam eusage
+
+commit 743bc9d67f88322804e296f3b6a6c9078b600cb3
+Author: Samarth Shridhar <shs96@cornell.edu>
+Date:   Wed Mar 27 11:43:36 2024 -0400
+
+    terminal game addition
+
+commit 35c5bcf05c13d82223b8361cecebcd24ca1cef57
+Author: Larry <ltt28@cornell.edu>
+Date:   Wed Mar 27 11:02:26 2024 -0400
+
+    added more in-depth build/exec instructions
+
+commit 7b0b9b98d7f7bd9cbecae8678530d5e0e4564d84
+Author: Larry <ltt28@cornell.edu>
+Date:   Wed Mar 27 11:00:14 2024 -0400
+
+    edited readme to add installation instructions
+
+commit 9d33905408d872c73a63d76ced7dc326efc2dc08
+Author: Larry <ltt28@cornell.edu>
+Date:   Wed Mar 27 10:55:45 2024 -0400
+
+    successfully finished merging gui with gamestate changes
+
+commit d16c66bc54f0c2620f81fd3bf8b917bdad71fc4a
+Author: Larry <ltt28@cornell.edu>
+Date:   Wed Mar 27 10:35:27 2024 -0400
+
+    merging changes
+
+commit 3d698a28a33898506a5c1b3f1bcbebc616b1146f
+Author: Samarth Shridhar <shs96@cornell.edu>
+Date:   Tue Mar 26 19:00:39 2024 -0400
+
+    Added Game State dictionary
+
+commit d74e5fba61600e2a6b99e93c975535ae66963661
+Author: Jacob Huang <jzh23@cornell.edu>
+Date:   Sat Mar 23 13:39:38 2024 -0400
+
+    Create Dune project
+    
+    - Dune proj called fnaf
+    - Added .ocamlformat
+    - Added OUnit2 library to test/dune
+
+commit 64fecfbfe23dcb4b34893a2c025800c899dd20f5
+Author: Rohan Mahajan <rm939@cornell.edu>
+Date:   Tue Mar 12 17:51:51 2024 -0400
+
+    Added Rohan
+
+commit 0d0f0b0184f60b265c767fdadec7a2bf43651895
+Author: Jacob Huang <jacobzghuang@gmail.com>
+Date:   Fri Mar 8 18:16:55 2024 -0500
+
+    added jacob
+
+commit fc0436d0a87c48de23160e771c1251cf5059a8a5
+Author: Larry <ltt28@cornell.edu>
+Date:   Fri Mar 8 18:08:54 2024 -0500
+
+    added larr'y
+    
+    :q
+    
+    :wq
+
+commit c432a148ac5c4d6d226926ec181904d32387a7b1
+Author: Samarth (Sam) Shridhar <sam.shridhar1950f@gmail.com>
+Date:   Fri Mar 8 18:07:36 2024 -0500
+
+    sam
+
+commit a654e64d5e76e478fbcb7ba9f167d5fe334c4ca7
+Author: Samarth (Sam) Shridhar <sam.shridhar1950f@gmail.com>
+Date:   Fri Mar 8 17:47:55 2024 -0500
+
+    Initial commit
