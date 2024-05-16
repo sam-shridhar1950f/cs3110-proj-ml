@@ -197,6 +197,12 @@ let toggle_generator state =
   end
   else print_endline "Battery full. Generator not needed."
 
+  let warn_battery state =
+    if state.battery <= 20 then 
+      print_endline "Warning: Battery critically low! Use power sparingly."
+    else if state.battery <= 50 then
+      print_endline "Warning: Battery getting low. Consider power-saving mode."
+
 let display_random_ascii_art filenames =
   Random.self_init ();
   let index = Random.int (List.length filenames) in
@@ -417,6 +423,7 @@ let rec game_loop state =
     print_endline "Time's up. The night is over. You survived!"
   else if state.battery <= 0 then print_endline "Battery dead. You lost!"
   else begin
+    warn_battery state;
     if current_hour <> state.last_announced_hour then begin
       if current_hour < List.length hourly_messages then
         print_endline (List.nth hourly_messages current_hour);
