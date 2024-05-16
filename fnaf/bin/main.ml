@@ -1,3 +1,8 @@
+(* @author Jacob Huang (jzh23) *)
+(* @author Samarth Shridhar (shs96) *)
+(* @author Larry Tao (ltt28) *)
+(* @author Rohan Mahajan (rm939) *)
+
 open! Unix
 open! Fnaf.Monster
 open! Fnaf.Game
@@ -48,12 +53,9 @@ let () =
   try
     let ascii_art = read_ascii_art_from_file filename in
     print_endline ascii_art;
-    (* Ensure this line ends with a semicolon *)
     start_or_tutorial () (* Proceed with the next function call *)
   with
   | Sys_error msg -> print_endline ("File error: " ^ msg)
-  (* End with a semicolon if more code follows *)
   | e ->
       print_endline ("An unexpected error occurred: " ^ Printexc.to_string e);
-      (* Ensure this line ends with a semicolon *)
       start_or_tutorial ()

@@ -1,6 +1,6 @@
 # CS3110 Project
 
-Welcome to our Five Nights at Freddy's project for CS3110! This document serves as a guide for setting up and using the tools and programs associated with our project.
+Welcome to our Five Nights at Freddy's project for CS3110! This document serves as a guide for setting up and using the tools and programs associated with our project. Read INSTALL.md for a setup instructions.
 
 ## Team Members
 - **Samarth (Sam) Shridhar**
